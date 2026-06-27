@@ -199,7 +199,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.13</div>
+    <div class="t-ver">MPK Ver 0.9.14</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -558,6 +558,24 @@ function weaknessText(s) {
     return `${degToDir3(s.angleDeg)}・右膨らみ・${sagToLabel(s.sagPct)}（${lenLabel}）の曲線`;
   }
   return s.label;
+}
+
+// 角度→時計の針方向（終点が指す向き）。arrowSVGの方向定義に一致させている。
+// 引く方向ベクトル Δ=(-cos, +sin)（画面座標y下向き）→ 12時=上,3時=右,6時=下,9時=左。
+function clockHour(deg) {
+  const rad = deg * Math.PI / 180;
+  const dx = -Math.cos(rad), dy = Math.sin(rad);
+  let cd = Math.atan2(dx, -dy) * 180 / Math.PI;
+  if (cd < 0) cd += 360;
+  return Math.round(cd / 30) % 12 || 12;
+}
+// 苦手区間(trendAnalysisのbin)→時計表現の文言。例「5時方向に引く左膨らみの曲線」。
+// 個別1本ではなく外れ値除外済みの区間代表を使うので、center角度とrepTypeから組み立てる。
+function weaknessTextBin(bin) {
+  const h = clockHour(bin.center);
+  const bulge = bin.repType === '曲線①' ? '左膨らみ' : bin.repType === '曲線②' ? '右膨らみ' : '';
+  const kind = (bin.repType === '直線①' || bin.repType === '直線②') ? '直線' : '曲線';
+  return bulge ? `${h}時方向に引く${bulge}の${kind}` : `${h}時方向に引く${kind}`;
 }
 
 // 結果画面の各行ラベルも日本語に
@@ -1626,8 +1644,12 @@ function showResult(){
   let weakHtml = '';
 
   // 最も苦手な問題を先出し
-  const allWeak=[...G.allScores].sort((a,b)=>a.accuracy-b.accuracy)[0];
-  if(allWeak&&allWeak.accuracy<80) weakHtml+=`「<b>${weaknessText(allWeak)}</b>」が特に苦手（${allWeak.accuracy}点）。<br>`;
+  // 「特に苦手」も結果画面の苦手▲と同じ trendAnalysis（3本以上の区間のみ＝外れ値除外）を使う。
+  // 直線・曲線それぞれの最苦手区間のうち平均が低い方を採用し、点数も区間平均で揃える。
+  const lineWorst  = trendAnalysis(lineAll,  lineBins).worst;
+  const curveWorst = trendAnalysis(curveAll, curveBins).worst;
+  const worstCand = [lineWorst, curveWorst].filter(Boolean).sort((a,b)=>a.avg-b.avg)[0];
+  if(worstCand && worstCand.avg < 80) weakHtml+=`「<b>${weaknessTextBin(worstCand)}</b>」が特に苦手（${worstCand.avg}点）。<br>`;
 
   // 3軸すべて90超えの場合は軸アドバイスをスキップして称賛
   const allAxesExcellent = avgSpeed>=90 && avgShake>=90 && avgPrecision>=90;
