@@ -199,7 +199,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.11</div>
+    <div class="t-ver">MPK Ver 0.9.13</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -1421,6 +1421,7 @@ function startGame(){
   debugFrames = [];
   showScreen('s-game');
   resizeCanvas();
+  updateMeterUI(); // 連打メーターの表示を初期化（状態はinitStateで0済み、UIの再描画が漏れていた）
 
 
   // 進捗バー初期化
@@ -1628,8 +1629,14 @@ function showResult(){
   const allWeak=[...G.allScores].sort((a,b)=>a.accuracy-b.accuracy)[0];
   if(allWeak&&allWeak.accuracy<80) weakHtml+=`「<b>${weaknessText(allWeak)}</b>」が特に苦手（${allWeak.accuracy}点）。<br>`;
 
-  // 軸のアドバイス
-  weakHtml += axisTips[minAxis] + '<br>';
+  // 3軸すべて90超えの場合は軸アドバイスをスキップして称賛
+  const allAxesExcellent = avgSpeed>=90 && avgShake>=90 && avgPrecision>=90;
+  if (allAxesExcellent) {
+    weakHtml += 'ちょっとすごすぎる…<br>';
+  } else {
+    // 軸のアドバイス
+    weakHtml += axisTips[minAxis] + '<br>';
+  }
 
   // 追加減点アドバイス（該当する場合のみ）
   if(count>0){
@@ -1639,9 +1646,9 @@ function showResult(){
     else if(ae>=5) weakHtml+=`入り抜きの位置を意識しよう。<br>`;
   }
 
-  if(avgAcc>=80) weakHtml+=`全体的に高水準！`;
-  else if(avgAcc>=65) weakHtml+=`精度をさらに安定させよう。`;
-  else weakHtml+=`まず直線を65点以上で安定させることから始めよう。`;
+  if(avgAcc>=80) weakHtml+=`全体的に高水準！すごい！`;
+  else if(avgAcc>=65) weakHtml+=`もう一度チャレンジ！繰り返すと上達します！`;
+  else weakHtml+=`明日もチャレンジ！続けると見違えるよ！`;
 
   document.getElementById('r-body').innerHTML =
     `<div class="weakness-box"><div class="weakness-hd">⚠ 弱点アドバイス</div><div class="weakness-body">${weakHtml}</div></div>`;
