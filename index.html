@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0SYCS372H3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-0SYCS372H3');
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>マンガ ペン入れ 極マッター</title>
@@ -1397,6 +1405,7 @@ function showScreen(id){
 }
 
 function startGame(){
+  gtag('event', 'game_start', { event_category: 'game' });
   initState();
   debugCount = 0;
   debugFrames = [];
