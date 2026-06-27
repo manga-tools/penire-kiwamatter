@@ -860,7 +860,7 @@ function judge() {
   updateMeterUI();
   document.getElementById('hud-score').textContent = G.score;
   showScorePop(earned, accuracy);
-  showFeedback(accuracy);
+  showFeedback(accuracy, speed);
   updateProgressBar();
 
   // デバッグキャプチャ（描いた線＋スコアの瞬間を保存）
@@ -1344,9 +1344,12 @@ function showScorePop(pt, acc) {
   document.body.appendChild(el);
   setTimeout(()=>el.remove(),1000);
 }
-function showFeedback(score) {
+function showFeedback(score, speed) {
   let cls,lbl;
-  if(score>=90){cls='ex';lbl='神業！';}
+  // 速度が低い場合は精度に関わらず「もっと速く！」を優先
+  if(speed!==undefined&&speed<50){
+    cls='ok';lbl='もっと速く！';
+  } else if(score>=90){cls='ex';lbl='神業！';}
   else if(score>=80){cls='ex';lbl='素晴らしい';}
   else if(score>=70){cls='gd';lbl='いい線だ';}
   else if(score>=55){cls='ok';lbl='もう少し';}
@@ -1610,7 +1613,7 @@ function showResult(){
     : '指先も手首も固定して腕全体で引こう。';
 
   // 各軸のアドバイス（説明なし、一言だけ）
-  const axisTips=['速く一気に引く意識を持とう。', shakeTip, '始点と終点を意識して引こう。'];
+  const axisTips=['もっと速く、スッと一気に引く意識を持とう。', shakeTip, '始点と終点を意識して引こう。'];
 
   let weakHtml = '';
 
