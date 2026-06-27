@@ -199,7 +199,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.16</div>
+    <div class="t-ver">MPK Ver 0.9.18</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -562,20 +562,23 @@ function weaknessText(s) {
 
 // 角度→時計の針方向（終点が指す向き）。arrowSVGの方向定義に一致させている。
 // 引く方向ベクトル Δ=(-cos, +sin)（画面座標y下向き）→ 12時=上,3時=右,6時=下,9時=左。
-function clockHour(deg) {
+function clockMinute(deg) {
   const rad = deg * Math.PI / 180;
   const dx = -Math.cos(rad), dy = Math.sin(rad);
   let cd = Math.atan2(dx, -dy) * 180 / Math.PI;
   if (cd < 0) cd += 360;
-  return Math.round(cd / 30) % 12 || 12;
+  return Math.round(cd / 6) % 60; // 0=12時位置, 15=3時, 30=6時, 45=9時
 }
 // 苦手区間(trendAnalysisのbin)→時計表現の文言。例「5時方向に引く左膨らみの曲線」。
 // 個別1本ではなく外れ値除外済みの区間代表を使うので、center角度とrepTypeから組み立てる。
 function weaknessTextBin(bin) {
-  const h = clockHour(bin.center);
+  const m = clockMinute(bin.center);
+  // 0・15・30・45分はキリのいい時計方向に言い換え、それ以外は「○分方向」
+  const clockMap = { 0:'時計の12時方向', 15:'時計の3時方向', 30:'時計の6時方向', 45:'時計の9時方向' };
+  const dir = clockMap[m] || `時計の${m}分方向`;
   const bulge = bin.repType === '曲線①' ? '左膨らみ' : bin.repType === '曲線②' ? '右膨らみ' : '';
   const kind = (bin.repType === '直線①' || bin.repType === '直線②') ? '直線' : '曲線';
-  return bulge ? `${h}時方向に引く${bulge}の${kind}` : `${h}時方向に引く${kind}`;
+  return bulge ? `${dir}に引く${bulge}の${kind}` : `${dir}に引く${kind}`;
 }
 
 // 結果画面の各行ラベルも日本語に
