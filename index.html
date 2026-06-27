@@ -124,8 +124,8 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 /* ── RESULT ── */
 #s-result{align-items:center;justify-content:flex-start;background:var(--ink);overflow-y:auto}
 #s-ad{align-items:center;justify-content:center;background:var(--ink)}
-.ad-inner{text-align:center;width:100%;max-width:320px;padding:32px 24px}
-.ad-cover{width:210px;height:297px;object-fit:cover;display:block;margin:0 auto 22px;border-radius:4px}
+.ad-inner{text-align:center;width:100%;max-width:560px;padding:32px 24px}
+.ad-cover{width:100%;aspect-ratio:210/297;object-fit:cover;display:block;margin:0 auto 22px;border-radius:4px}
 .ad-catch{font-size:13px;color:#fdfcfa;margin-bottom:20px;line-height:1.8;letter-spacing:1px}
 .btn-amazon{display:inline-block;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-weight:700;font-size:11px;letter-spacing:2px;padding:9px 20px;border:1px solid rgba(255,255,255,.12);cursor:pointer;border-radius:3px;margin-bottom:16px;text-decoration:none}
 .btn-continue{display:block;background:var(--red);color:#fff;font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:15px;letter-spacing:4px;padding:15px 20px;border:none;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);width:100%;transition:background .15s}
@@ -1382,7 +1382,6 @@ async function shareResult(){
 const AD_CATCHES = [
   '驚きのAmazonレビュー ★4.8！',
   'そろそろ休む？読む？',
-  'ペン入れ疲れに…飛ぶぞ？',
   '新感覚 マンガ技術体感マンガ',
   '受賞・デビューができない人へ',
   '読者に「届く」マンガになる',
