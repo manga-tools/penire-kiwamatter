@@ -1347,7 +1347,7 @@ function showScorePop(pt, acc) {
 function showFeedback(score, speed) {
   let cls,lbl;
   // 速度が低い場合は精度に関わらず「もっと速く！」を優先
-  if(speed!==undefined&&speed<35){
+  if(speed!==undefined&&speed<40){
     cls='ok';lbl='もっと速く！';
   } else if(score>=90){cls='ex';lbl='神業！';}
   else if(score>=80){cls='ex';lbl='素晴らしい';}
