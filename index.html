@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>マンガ ペン入れ 極マッター</title>
+<meta property="og:title" content="マンガ ペン入れ 極マッター" />
+<meta property="og:description" content="マンガ描きのためのペン入れ練習ゲーム" />
+<meta property="og:image" content="https://manga-tools.github.io/penire-kiwamatter/ogp.png" />
+<meta property="og:url" content="https://manga-tools.github.io/penire-kiwamatter/" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Bebas+Neue&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0d12;--ink2:#16161f;--paper:#f2ede4;
+  --red:#c0392b;--red2:#e74c3c;--gold:#d4a017;--gold2:#f0c040;
+  --green:#27ae60;--orange:#e67e22;--mist:#b0bec5;--white:#fdfcfa;
+  --cyan:#00d4ff;
+}
+body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow:hidden}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+
+/* ── TITLE ── */
+#s-title{align-items:center;justify-content:center;position:relative;overflow:hidden}
+.title-grid{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(255,255,255,.025) 59px,rgba(255,255,255,.025) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(255,255,255,.025) 59px,rgba(255,255,255,.025) 60px)}
+.title-glow{position:absolute;top:28%;left:50%;transform:translate(-50%,-50%);width:600px;height:320px;background:radial-gradient(ellipse,rgba(192,57,43,.14) 0%,transparent 70%);pointer-events:none}
+.title-inner{position:relative;text-align:center;padding:40px 24px}
+.t-main{font-family:'Bebas Neue',sans-serif;font-size:clamp(60px,13vw,124px);line-height:1.05;letter-spacing:4px;color:var(--white);margin-bottom:12px;white-space:nowrap}
+.t-ver{font-size:11px;letter-spacing:3px;color:var(--red);margin-bottom:28px;font-family:'Bebas Neue',sans-serif}
+.t-sub{font-size:12px;letter-spacing:8px;color:var(--mist);margin-bottom:36px}
+.t-desc{max-width:400px;margin:0 auto 40px;font-size:13px;line-height:2.1;color:rgba(255,255,255,.45)}
+.btn-go{display:inline-block;background:var(--red);color:#fff;font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:17px;letter-spacing:4px;padding:17px 52px;border:none;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:background .15s}
+.btn-go:hover{background:var(--red2)}
+.t-flow{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:44px;flex-wrap:wrap}
+.t-flow-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:10px 16px;font-size:11px;color:rgba(255,255,255,.5);text-align:center;line-height:1.6}
+.t-flow-item strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--white);margin-bottom:2px}
+.t-flow-item.straight strong{color:#88ccff}
+.t-flow-item.curve strong{color:#ffcc66}
+.t-flow-arrow{font-size:18px;color:rgba(255,255,255,.2)}
+.t-flow-loop{font-size:11px;color:var(--cyan);letter-spacing:2px;margin-top:8px;width:100%;text-align:center}
+
+/* ── GAME ── */
+#s-game{background:var(--ink2)}
+
+/* セット内進捗（5マス） */
+.set-progress{display:flex;gap:3px;padding:8px 14px 0;flex-shrink:0}
+.set-seg{flex:1;height:4px;border-radius:2px;transition:background .25s}
+.set-seg.done{background:var(--green)}
+.set-seg.active{background:var(--red)}
+.set-seg.upcoming{background:rgba(255,255,255,.08)}
+
+/* HUD */
+.hud-top{display:flex;align-items:stretch;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.06)}
+.hud-time{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 16px;border-right:1px solid rgba(255,255,255,.06);min-width:80px}
+.hud-time-lbl{font-size:9px;letter-spacing:3px;color:var(--mist)}
+.hud-time-num{font-family:'Bebas Neue',sans-serif;font-size:42px;line-height:1;color:var(--white);letter-spacing:2px}
+.hud-time-num.urgent{color:var(--red);animation:pulse .4s infinite alternate}
+@keyframes pulse{from{opacity:1}to{opacity:.5}}
+.hud-center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:6px 10px;gap:3px}
+.hud-phase{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:3px}
+.hud-phase.straight{color:#88ccff}
+.hud-phase.curve{color:#ffcc66}
+.hud-phase.scurve{color:#ff99aa}
+.hud-qinfo{font-size:10px;letter-spacing:2px;color:var(--mist)}
+.hud-right{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 14px;border-left:1px solid rgba(255,255,255,.06);gap:2px}
+.hud-score-lbl{font-size:9px;letter-spacing:3px;color:var(--mist)}
+.hud-score-num{font-family:'Bebas Neue',sans-serif;font-size:34px;line-height:1;color:var(--gold);letter-spacing:2px}
+.hud-set-lbl{font-size:9px;letter-spacing:2px;color:var(--mist)}
+.hud-set-num{font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--cyan);letter-spacing:2px}
+
+/* タイムバー */
+.time-bar-wrap{height:4px;background:rgba(255,255,255,.06);flex-shrink:0}
+.time-bar-fill{height:100%;background:var(--red);transition:width .08s linear,background .3s}
+
+/* 連打メーター */
+.meter-row{display:flex;align-items:center;gap:10px;padding:5px 14px;background:rgba(0,0,0,.18);flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.04)}
+.meter-lbl{font-size:9px;letter-spacing:3px;color:var(--mist);white-space:nowrap}
+.meter-bg{flex:1;height:10px;background:rgba(255,255,255,.07);border-radius:5px;overflow:hidden}
+.meter-fill{height:100%;border-radius:5px;background:var(--cyan);transition:width .2s ease;box-shadow:0 0 8px rgba(0,212,255,.4)}
+.meter-fill.charged{background:var(--gold2);box-shadow:0 0 14px rgba(240,192,64,.7)}
+.combo-lbl{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--cyan);white-space:nowrap;min-width:60px;text-align:right}
+
+/* キャンバス */
+.canvas-area{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;position:relative}
+#gc{background:var(--paper);display:block;touch-action:none;cursor:crosshair;box-shadow:0 0 0 1px rgba(0,0,0,.4),0 6px 32px rgba(0,0,0,.5)}
+.chint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.18);pointer-events:none;transition:opacity .3s}
+
+/* フィードバック */
+#fb-ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;z-index:200}
+#fb-ov.show{display:flex}
+.fb-inner{text-align:center;animation:fbp .4s ease forwards}
+@keyframes fbp{0%{opacity:0;transform:scale(.5)}55%{transform:scale(1.08)}100%{opacity:1;transform:scale(1)}}
+.fb-num{font-family:'Bebas Neue',sans-serif;font-size:96px;line-height:1;letter-spacing:4px}
+.fb-lbl{font-size:15px;letter-spacing:5px;margin-top:2px}
+.ex{color:var(--gold2);text-shadow:0 0 40px rgba(240,192,64,.6)}
+.gd{color:var(--green);text-shadow:0 0 30px rgba(39,174,96,.5)}
+.ok{color:var(--orange)}
+.bd{color:var(--red)}
+
+/* 失敗バナー */
+#fail-banner{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(13,13,18,.88);z-index:400}
+#fail-banner.show{display:flex}
+.fail-inner{text-align:center;animation:banIn .5s ease forwards}
+@keyframes banIn{0%{opacity:0;transform:scale(.85) translateY(16px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+.fail-title{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:4px;color:var(--red);margin-bottom:8px}
+.fail-sub{font-size:13px;letter-spacing:2px;color:rgba(255,255,255,.45);line-height:2}
+
+/* スコアポップ */
+.score-pop{position:fixed;pointer-events:none;z-index:300;font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:3px;animation:scorePop .9s ease forwards}
+@keyframes scorePop{0%{opacity:0;transform:translateY(0) scale(.7)}20%{opacity:1;transform:translateY(-8px) scale(1.1)}80%{opacity:1;transform:translateY(-28px)}100%{opacity:0;transform:translateY(-48px) scale(.9)}}
+
+/* コンボ */
+.combo-fly{position:fixed;top:42%;left:50%;transform:translate(-50%,-50%);font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:5px;color:var(--gold2);pointer-events:none;z-index:250;animation:cfly .8s ease forwards}
+@keyframes cfly{0%{opacity:0;transform:translate(-50%,-30%)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-100%)}}
+
+/* タイムボーナス */
+.bonus-toast{position:fixed;top:80px;right:20px;font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 20px rgba(0,212,255,.8);pointer-events:none;z-index:350;animation:toastUp 1s ease forwards}
+.penalty-toast{position:fixed;top:80px;right:20px;font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;color:var(--red2);text-shadow:0 0 20px rgba(231,76,60,.8);pointer-events:none;z-index:350;animation:toastUp 1s ease forwards}
+@keyframes toastUp{0%{opacity:0;transform:translateY(8px)}15%{opacity:1}80%{opacity:1}100%{opacity:0;transform:translateY(-24px)}}
+
+/* ── RESULT ── */
+#s-result{align-items:center;justify-content:flex-start;background:var(--ink);overflow-y:auto}
+#s-ad{align-items:center;justify-content:center;background:var(--ink)}
+.ad-inner{text-align:center;width:100%;max-width:320px;padding:32px 24px}
+.ad-cover{width:210px;height:297px;object-fit:cover;display:block;margin:0 auto 22px;border-radius:4px}
+.ad-catch{font-size:13px;color:#fdfcfa;margin-bottom:20px;line-height:1.8;letter-spacing:1px}
+.btn-amazon{display:inline-block;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-weight:700;font-size:11px;letter-spacing:2px;padding:9px 20px;border:1px solid rgba(255,255,255,.12);cursor:pointer;border-radius:3px;margin-bottom:16px;text-decoration:none}
+.btn-continue{display:block;background:var(--red);color:#fff;font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:15px;letter-spacing:4px;padding:15px 20px;border:none;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);width:100%;transition:background .15s}
+.btn-continue:hover{background:var(--red2)}
+.result-wrap{max-width:500px;width:100%;padding:24px 18px;text-align:center;margin:0 auto}
+.r-game-title{font-size:10px;letter-spacing:5px;color:rgba(255,255,255,.55);margin-bottom:16px;font-weight:700}
+.r-rank-emoji{font-size:48px;line-height:1;margin-bottom:4px}
+.r-rank-name{font-family:'Bebas Neue',sans-serif;font-size:34px;letter-spacing:6px;color:var(--gold);margin-bottom:10px}
+.r-score{font-family:'Bebas Neue',sans-serif;font-size:76px;line-height:1;color:var(--white);letter-spacing:4px}
+.r-score-lbl{font-size:10px;letter-spacing:5px;color:var(--mist);margin-bottom:14px}
+.r-axis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.r-axis-card{background:rgba(255,255,255,.06);padding:10px 6px;text-align:center;border-radius:4px}
+.r-axis-lbl{font-size:9px;letter-spacing:2px;color:var(--mist);margin-bottom:4px}
+.r-axis-val{font-family:'Bebas Neue',sans-serif;font-size:24px;line-height:1;letter-spacing:1px}
+.r-axis-bar{height:3px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:5px;overflow:hidden}
+.r-axis-fill{height:100%;border-radius:2px}
+.r-strength{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.r-str-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:11px;border-radius:4px;text-align:center}
+.r-str-title{font-size:9px;letter-spacing:3px;color:var(--mist);margin-bottom:8px;text-align:center}
+.r-str-row{display:grid;grid-template-columns:52px 30px 44px 32px;align-items:center;justify-content:center;gap:4px;padding:5px 0}
+.r-str-row.bottom{border-top:1px solid rgba(255,255,255,.06)}
+.r-str-tag{font-size:13px;font-weight:700;letter-spacing:1px}
+.r-str-deg{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;line-height:1;text-align:right}
+.r-str-pt{font-size:11px;opacity:.65;text-align:right}
+.weakness-box{background:rgba(192,57,43,.09);border:1px solid rgba(192,57,43,.28);padding:11px 13px;margin-bottom:10px;text-align:left;border-radius:2px}
+.weakness-hd{font-size:9px;letter-spacing:3px;color:var(--red);margin-bottom:5px}
+.weakness-body{font-size:12px;color:rgba(255,255,255,.65);line-height:1.9}
+.r-stats{display:flex;gap:0;margin-bottom:18px;border:1px solid rgba(255,255,255,.08)}
+.r-stat{flex:1;padding:10px 4px;text-align:center;border-right:1px solid rgba(255,255,255,.08)}
+.r-stat:last-child{border-right:none}
+.r-stat-val{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--white)}
+.r-stat-lbl{font-size:9px;letter-spacing:1px;color:var(--mist);margin-top:2px}
+.r-section{margin-bottom:14px;text-align:left}
+.r-sec-hd{font-size:9px;letter-spacing:4px;color:var(--mist);margin-bottom:6px;text-transform:uppercase;padding-bottom:3px;border-bottom:1px solid rgba(255,255,255,.06)}
+.r-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.r-row-lbl{font-size:11px;color:rgba(255,255,255,.5);flex:1}
+.r-bar-bg{width:80px;height:4px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;flex-shrink:0}
+.r-bar-fill{height:100%;border-radius:3px}
+.r-row-val{font-family:'Bebas Neue',sans-serif;font-size:15px;min-width:38px;text-align:right}
+/* 3軸カード（旧スタイル互換） */
+.axis-section{margin-bottom:10px;text-align:left}
+.axis-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px}
+.axis-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);padding:10px 10px 8px;border-radius:2px}
+.axis-card.weak{border-color:rgba(192,57,43,.5);background:rgba(192,57,43,.08)}
+.axis-card.strong{border-color:rgba(39,174,96,.4);background:rgba(39,174,96,.06)}
+.axis-name{font-size:9px;letter-spacing:3px;color:var(--mist);margin-bottom:5px}
+.axis-bar-bg{height:4px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.axis-bar-fill{height:100%;border-radius:3px;transition:width .6s ease}
+.axis-val{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;line-height:1}
+.axis-unit{font-size:9px;letter-spacing:2px;color:var(--mist);margin-top:2px}
+.r-btns{display:flex;gap:10px;justify-content:center;margin-top:18px}
+.rbtn{padding:13px 28px;font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;cursor:pointer;border:none;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);transition:all .15s}
+.rbtn.p{background:var(--red);color:#fff}.rbtn.p:hover{background:var(--red2)}
+.rbtn.s{background:rgba(255,255,255,.08);color:rgba(255,255,255,.55)}.rbtn.s:hover{background:rgba(255,255,255,.14)}
+.rbtn.x{background:#000;color:#fff;border:1px solid rgba(255,255,255,.2)}.rbtn.x:hover{background:#111}
+</style>
+</head>
+<body>
+
+<!-- TITLE -->
+<div id="s-title" class="screen active">
+  <div class="title-grid"></div>
+  <div class="title-glow"></div>
+  <div class="title-inner">
+    <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
+    <div class="t-ver">MPK Ver 0.9.0</div>
+    <div class="t-desc">
+      直線・曲線、各5問を繰り返す。<br>
+      時間内にできるだけ高精度で描き続けよう。
+    </div>
+    <button class="btn-go" onclick="startGame()">極まる</button>
+    <div class="t-flow">
+      <div class="t-flow-item straight"><strong>直線①</strong>×5問</div>
+      <div class="t-flow-arrow">→</div>
+      <div class="t-flow-item straight"><strong>直線②</strong>×5問</div>
+      <div class="t-flow-arrow">→</div>
+      <div class="t-flow-item curve"><strong>曲線①</strong>×5問</div>
+      <div class="t-flow-arrow">→</div>
+      <div class="t-flow-item curve"><strong>曲線②</strong>×5問</div>
+      <div class="t-flow-loop">↩ 全4種クリアでまた直線①から繰り返す</div>
+    </div>
+  </div>
+</div>
+
+<!-- GAME -->
+<div id="s-game" class="screen">
+  <div class="set-progress" id="set-progress"></div>
+
+  <div class="hud-top">
+    <div class="hud-time">
+      <div class="hud-time-lbl">TIME</div>
+      <div class="hud-time-num" id="time-num">30</div>
+    </div>
+    <div class="hud-center">
+      <div class="hud-phase" id="hud-phase">直線</div>
+      <div class="hud-qinfo" id="hud-qinfo">セット1 — 1問目 / 5問</div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-score-lbl">SCORE</div>
+      <div class="hud-score-num" id="hud-score">0</div>
+      <div class="hud-set-lbl">セット</div>
+      <div class="hud-set-num" id="hud-set">1</div>
+      <button id="debug-toggle" onclick="toggleDebug()" style="margin-top:4px;font-size:9px;padding:2px 6px;border-radius:4px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.07);color:rgba(255,255,255,.5);cursor:pointer;letter-spacing:1px">DEBUG OFF</button>
+    </div>
+  </div>
+
+  <div class="time-bar-wrap">
+    <div class="time-bar-fill" id="time-bar" style="width:100%"></div>
+  </div>
+
+  <div class="meter-row">
+    <div class="meter-lbl">連打メーター</div>
+    <div class="meter-bg">
+      <div class="meter-fill" id="meter-fill" style="width:0%"></div>
+    </div>
+    <div class="combo-lbl" id="combo-lbl">×0</div>
+  </div>
+
+  <div class="canvas-area">
+    <canvas id="gc"></canvas>
+    <div class="chint" id="chint">ペンで線を引いてください</div>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div id="s-result" class="screen">
+  <div class="result-wrap" id="result-wrap">
+    <!-- ゲームタイトル -->
+    <div class="r-game-title">ペン入れ極マッター</div>
+    <!-- ランク -->
+    <div class="r-rank-emoji" id="r-rank-emoji">🐌</div>
+    <div class="r-rank-name" id="r-rank-name">なめくじ級</div>
+    <!-- スコア -->
+    <div class="r-score" id="r-score">0</div>
+    <div class="r-score-lbl">TOTAL SCORE</div>
+    <!-- 3軸 -->
+    <div class="r-axis" id="r-axis"></div>
+    <!-- 得意・苦手 -->
+    <div class="r-strength" id="r-strength"></div>
+    <!-- 弱点 -->
+    <div id="r-body"></div>
+    <!-- 統計 -->
+    <div class="r-stats" id="r-stats"></div>
+    <div class="r-btns">
+      <button class="rbtn p" onclick="showScreen('s-ad')">もう一度</button>
+      <button class="rbtn x" onclick="shareResult()">結果画像保存</button>
+      <button class="rbtn s" onclick="showScreen('s-title')">タイトルへ</button>
+    </div>
+    <!-- デバッグシート -->
+    <div id="debug-sheet" style="display:none;margin-top:24px;width:100%">
+      <div style="font-size:10px;letter-spacing:3px;color:rgba(255,255,255,.3);margin-bottom:12px;text-align:center">DEBUG SHEET</div>
+      <div id="debug-tiles" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<div id="s-ad" class="screen">
+  <div class="ad-inner">
+    <a href="https://amzn.to/4gNiamu" target="_blank" rel="noopener"><img class="ad-cover" src="./cover.jpg" alt="マンガで楽しいマンガの描き方"></a>
+    <div class="ad-catch" id="ad-catch-text"></div>
+    <a class="btn-amazon" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener">Amazonで見る</a>
+    <button class="btn-continue" onclick="startGame()">続けて極まる</button>
+  </div>
+</div>
+
+<div id="fail-banner">
+  <div class="fail-inner" id="fail-inner"></div>
+</div>
+
+<div id="fb-ov"><div class="fb-inner" id="fb-inner"></div></div>
+
+<script>
+// ============================================================
+const Q_PER_PHASE = 5;
+const PASS_THRESHOLD = 65;
+const GAME_TIME = 45000;
+
+// 4フェーズ定義
+const PHASES = [
+  { name:'直線①', cls:'straight', label:'右上→左下（45〜90°）' },
+  { name:'直線②', cls:'straight', label:'左→右（170〜190°）'   },
+  { name:'曲線①', cls:'curve',    label:'右上→左下 左膨らみ'    },
+  { name:'曲線②', cls:'curve',    label:'上→下 右膨らみ'        },
+];
+
+// ============================================================
+// 問題生成
+// ============================================================
+
+function clampPts(pts, W, H, pad) {
+  return pts.map(p => ({
+    x: Math.max(pad, Math.min(W - pad, p.x)),
+    y: Math.max(pad, Math.min(H - pad, p.y))
+  }));
+}
+
+// 長さキュー：セット数に応じて短め〜長めにシフト
+let lineLenQueue0 = [], lineLenQueue1 = [];
+function makeLenQueue(setIdx) {
+  // セット1は短め中心、セット2以降は徐々に長くなる
+  const offset = Math.min(setIdx * 0.06, 0.18);
+  const slots = [
+    0.20 + offset + Math.random()*0.08, // 短
+    0.20 + offset + Math.random()*0.08, // 短
+    0.33 + offset + Math.random()*0.08, // 中
+    0.45 + offset + Math.random()*0.10, // 長
+    0.45 + offset + Math.random()*0.10, // 長
+  ];
+  return slots.sort(() => Math.random() - 0.5);
+}
+
+// 直線②専用：セット1は直線①と同じ短め設定
+function makeLenQueueLine2(setIdx) {
+  const offset = Math.min(setIdx * 0.06, 0.18);
+  const slots = [
+    0.20 + offset + Math.random()*0.08,
+    0.20 + offset + Math.random()*0.08,
+    0.33 + offset + Math.random()*0.08,
+    0.45 + offset + Math.random()*0.10,
+    0.45 + offset + Math.random()*0.10,
+  ];
+  return slots.sort(() => Math.random() - 0.5);
+}
+
+// フェーズ0：直線・右上→左下（45°〜110°）
+function genLinePhase0(W, H) {
+  const pad = 44;
+  const deg = 45 + Math.random() * 65;
+  const rad = deg * Math.PI / 180;
+  if (!lineLenQueue0.length) lineLenQueue0 = makeLenQueue(G.setIndex);
+  const lenPct = lineLenQueue0.shift();
+  const len = Math.min(W, H) * lenPct;
+  const margin = len / 2 + pad;
+  const cx = margin + Math.random() * Math.max(W - margin*2, W*0.2);
+  const cy = margin + Math.random() * Math.max(H - margin*2, H*0.2);
+  const x1 = cx + Math.cos(rad) * len/2;
+  const y1 = cy - Math.sin(rad) * len/2;
+  const x2 = cx - Math.cos(rad) * len/2;
+  const y2 = cy + Math.sin(rad) * len/2;
+  const pts = [];
+  for (let i = 0; i <= 50; i++) pts.push({ x: x1+(x2-x1)*i/50, y: y1+(y2-y1)*i/50 });
+  const lenPx = Math.round(len);
+  return { pts: clampPts(pts,W,H,pad), type:'直線①', group:'右上→左下',
+           label: Math.round(deg)+'° / '+lenPx+'px', angleDeg:Math.round(deg), lenPx, baseTol:Math.min(W,H), tol:12, basePt:100 };
+}
+
+// フェーズ1：直線・左→右（170°〜190°）
+function genLinePhase1(W, H) {
+  const pad = 44;
+  const deg = 170 + Math.random() * 20;
+  const rad = deg * Math.PI / 180;
+  if (!lineLenQueue1.length) lineLenQueue1 = makeLenQueueLine2(G.setIndex);
+  let lenPct = lineLenQueue1.shift();
+  // 水平に近いほど長さを抑えるが、セット数で緩む
+  // セット1でも適度な長さが出るよう基準を上げた
+  const tilt = Math.abs(deg - 180); // 0=真水平, 10=最大傾き
+  const setBonus = Math.min(G.setIndex * 0.06, 0.30);
+  const maxPct = 0.38 + tilt * 0.025 + setBonus; // 基準を0.25→0.38に
+  lenPct = Math.min(lenPct, maxPct);
+  const len = Math.min(W, H) * lenPct;
+  const margin = len/2 + pad;
+  // 中心をキャンバス全体に散らばらせる（直線①と同じ方式）
+  const safeW = Math.max(W - margin*2, W*0.2);
+  const safeH = Math.max(H - margin*2, H*0.2);
+  const cx = margin + Math.random() * safeW;
+  const cy = margin + Math.random() * safeH;
+  let x1 = cx - Math.cos(rad)*len/2;
+  let y1 = cy - Math.sin(rad)*len/2;
+  let x2 = cx + Math.cos(rad)*len/2;
+  let y2 = cy + Math.sin(rad)*len/2;
+  if (x1 > x2) { [x1,x2]=[x2,x1]; [y1,y2]=[y2,y1]; }
+  const pts = [];
+  for (let i = 0; i <= 50; i++) pts.push({ x: x1+(x2-x1)*i/50, y: y1+(y2-y1)*i/50 });
+  const lenPx = Math.round(len);
+  return { pts: clampPts(pts,W,H,pad), type:'直線②', group:'左→右',
+           label: Math.round(deg)+'° / '+lenPx+'px', angleDeg:Math.round(deg), lenPx, baseTol:Math.min(W,H), tol:12, basePt:100 };
+}
+
+// 3次ベジェ曲線で自然な弧を生成
+// sag: 正=左側膨らみ、負=右側膨らみ（弦長に対する割合）
+function bezierArc(x1, y1, x2, y2, sag, steps) {
+  const dx = x2-x1, dy = y2-y1;
+  const chordLen = Math.hypot(dx, dy);
+  const nx = -dy/chordLen, ny = dx/chordLen;
+  const bulgeDist = chordLen * sag;
+  const cp1x = x1 + dx*0.33 + nx*bulgeDist*1.33;
+  const cp1y = y1 + dy*0.33 + ny*bulgeDist*1.33;
+  const cp2x = x1 + dx*0.67 + nx*bulgeDist*1.33;
+  const cp2y = y1 + dy*0.67 + ny*bulgeDist*1.33;
+  const pts = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const u = 1 - t;
+    pts.push({
+      x: u*u*u*x1 + 3*u*u*t*cp1x + 3*u*t*t*cp2x + t*t*t*x2,
+      y: u*u*u*y1 + 3*u*u*t*cp1y + 3*u*t*t*cp2y + t*t*t*y2,
+    });
+  }
+  return pts;
+}
+
+// フェーズ2：曲線・右上→左下・左膨らみ（45°〜110°）
+let curveLenQueue2 = [], curveLenQueue3 = [];
+function makeCurveLenQueue(setIdx) {
+  const offset = Math.min(setIdx * 0.05, 0.15);
+  const slots = [
+    0.22 + offset + Math.random()*0.06, // 短
+    0.30 + offset + Math.random()*0.06, // 中
+    0.38 + offset + Math.random()*0.07, // 中長
+    0.47 + offset + Math.random()*0.08, // 長
+    0.47 + offset + Math.random()*0.08, // 長
+  ];
+  return slots.sort(() => Math.random() - 0.5);
+}
+// 曲率もセット数で変化（セット1は浅め、セット2以降は深くなる）
+function makeSagPct(setIdx) {
+  const base = 0.05 + Math.min(setIdx * 0.025, 0.08); // セット1:0.05〜、セット4+:0.13〜
+  return base + Math.random() * 0.10;
+}
+
+// フェーズ2：曲線・右上→左下・左膨らみ（45°〜110°）
+function genCurvePhase2(W, H) {
+  const sagPct = makeSagPct(G.setIndex);
+  const deg = 45 + Math.random() * 65;
+  const rad = deg * Math.PI / 180;
+  if (!curveLenQueue2.length) curveLenQueue2 = makeCurveLenQueue(G.setIndex);
+  const lenPct = curveLenQueue2.shift();
+  const len = Math.min(W,H) * lenPct;
+  const sagAbs = len * sagPct;
+  const pad = len/2 + sagAbs + 30;
+  const cx = pad + Math.random() * Math.max(W - pad*2, W*0.1);
+  const cy = pad + Math.random() * Math.max(H - pad*2, H*0.1);
+  const x1 = cx + Math.cos(rad)*len/2;
+  const y1 = cy - Math.sin(rad)*len/2;
+  const x2 = cx - Math.cos(rad)*len/2;
+  const y2 = cy + Math.sin(rad)*len/2;
+  const pts = bezierArc(x1,y1,x2,y2, sagPct, 80);
+  const lenPx = Math.round(len);
+  return { pts, type:'曲線①', group:'右上→左下 左膨らみ',
+           label: Math.round(deg)+'° / '+lenPx+'px', angleDeg:Math.round(deg), lenPx, sagPct, baseTol:Math.min(W,H), tol:18, basePt:150 };
+}
+
+// フェーズ3：曲線・上→下・右膨らみ（45°〜135°）
+function genCurvePhase3(W, H) {
+  const sagPctAbs = makeSagPct(G.setIndex);
+  const sagPct = -sagPctAbs;
+  const deg = 45 + Math.random() * 90;
+  const rad = deg * Math.PI / 180;
+  if (!curveLenQueue3.length) curveLenQueue3 = makeCurveLenQueue(G.setIndex);
+  const lenPct = curveLenQueue3.shift();
+  const len = Math.min(W,H) * lenPct;
+  const sagAbs = len * sagPctAbs;
+  const pad = len/2 + sagAbs + 30;
+  const cx = pad + Math.random() * Math.max(W - pad*2, W*0.1);
+  const cy = pad + Math.random() * Math.max(H - pad*2, H*0.1);
+  let x1 = cx - Math.cos(rad)*len/2;
+  let y1 = cy - Math.sin(rad)*len/2;
+  let x2 = cx + Math.cos(rad)*len/2;
+  let y2 = cy + Math.sin(rad)*len/2;
+  if (y1 > y2) { [x1,x2]=[x2,x1]; [y1,y2]=[y2,y1]; }
+  const pts = bezierArc(x1,y1,x2,y2, sagPct, 80);
+  const lenPx = Math.round(len);
+  return { pts, type:'曲線②', group:'上→下 右膨らみ',
+           label: Math.round(deg)+'° / '+lenPx+'px', angleDeg:Math.round(deg), lenPx, sagPct:sagPctAbs, baseTol:Math.min(W,H), tol:18, basePt:150 };
+}
+
+const GENERATORS = [genLinePhase0, genLinePhase1, genCurvePhase2, genCurvePhase3];
+
+// ============================================================
+// 日本語ラベル変換
+// ============================================================
+
+// 角度→方向の日本語（直線①：右上→左下系）
+function degToDir0(deg) {
+  if (deg <= 60) return '緩やかな斜め';
+  if (deg <= 80) return 'やや急な斜め';
+  return '急な斜め（ほぼ縦）';
+}
+// 角度→方向の日本語（直線②：左→右系）
+function degToDir1(deg) {
+  const tilt = Math.abs(deg - 180);
+  if (tilt <= 3) return 'ほぼ水平';
+  if (tilt <= 7) return '少し傾いた水平';
+  return 'やや傾いた水平';
+}
+// 角度→方向（曲線系）
+function degToDir2(deg) { return degToDir0(deg); }
+function degToDir3(deg) {
+  if (deg <= 70) return '緩やかな斜め下';
+  if (deg <= 100) return 'ほぼ垂直';
+  return 'やや逆傾きの縦';
+}
+
+// 長さ→日本語（baseTolに対する比率）
+function lenToLabel(lenPx, baseTol) {
+  const ratio = lenPx / baseTol;
+  if (ratio < 0.35) return '短め';
+  if (ratio < 0.55) return '中くらい';
+  return '長め';
+}
+
+// 膨らみ量→日本語
+function sagToLabel(sagPct) {
+  if (sagPct < 0.11) return '浅い弧';
+  if (sagPct < 0.18) return '中くらいの弧';
+  return '深い弧';
+}
+
+// スコアを人間らしい苦手表現に変換
+function weaknessText(s) {
+  const lenLabel = lenToLabel(s.lenPx, s.baseTol);
+  if (s.type === '直線①') {
+    return `${degToDir0(s.angleDeg)}（${lenLabel}）の直線`;
+  }
+  if (s.type === '直線②') {
+    return `${degToDir1(s.angleDeg)}（${lenLabel}）の直線`;
+  }
+  if (s.type === '曲線①') {
+    return `${degToDir2(s.angleDeg)}・左膨らみ・${sagToLabel(s.sagPct)}（${lenLabel}）の曲線`;
+  }
+  if (s.type === '曲線②') {
+    return `${degToDir3(s.angleDeg)}・右膨らみ・${sagToLabel(s.sagPct)}（${lenLabel}）の曲線`;
+  }
+  return s.label;
+}
+
+// 結果画面の各行ラベルも日本語に
+function humanLabel(s) {
+  const lenLabel = lenToLabel(s.lenPx, s.baseTol);
+  if (s.type === '直線①') return `${degToDir0(s.angleDeg)} / ${lenLabel}`;
+  if (s.type === '直線②') return `${degToDir1(s.angleDeg)} / ${lenLabel}`;
+  if (s.type === '曲線①') return `${degToDir2(s.angleDeg)} ${sagToLabel(s.sagPct)} / ${lenLabel}`;
+  if (s.type === '曲線②') return `${degToDir3(s.angleDeg)} ${sagToLabel(s.sagPct)} / ${lenLabel}`;
+  return s.label;
+}
+
+// ============================================================
+// ランク定義（スコアで決まる）
+// ============================================================
+const RANKS = [
+  { min:     0, emoji:'🐌', name:'なめくじ級'         },
+  { min:  1000, emoji:'🪱', name:'みみず級'            },
+  { min:  2000, emoji:'🐛', name:'いもむし級'          },
+  { min:  3000, emoji:'🐜', name:'ありんこ級'           },
+  { min:  4000, emoji:'🐞', name:'てんとうむし級'      },
+  { min:  5000, emoji:'🦋', name:'ちょうちょ級'        },
+  { min:  6000, emoji:'🐝', name:'みつばち級'          },
+  { min:  7000, emoji:'🐝', name:'すずめばち級'        },
+  { min:  8000, emoji:'🐦', name:'すずめ級'            },
+  { min:  9000, emoji:'🐦', name:'つばめ級'            },
+  { min: 10000, emoji:'🦅', name:'とんび級'            },
+  { min: 11000, emoji:'🦅', name:'はやぶさ級'          },
+  { min: 12000, emoji:'✈️',  name:'ひこうき級'          },
+  { min: 13000, emoji:'🚀', name:'ろけっと級'          },
+  { min: 14000, emoji:'🛸', name:'UFO級'               },
+  { min: 15000, emoji:'🐉', name:'どらごん級'          },
+  { min: 16000, emoji:'🦄', name:'ぺがさす級'          },
+  { min: 17000, emoji:'💫', name:'流れ星級'            },
+  { min: 18000, emoji:'☄️',  name:'超新星級'            },
+  { min: 19000, emoji:'🚅', name:'こだま級'            },
+  { min: 20000, emoji:'🚅', name:'ひかり級'            },
+  { min: 21000, emoji:'🚄', name:'のぞみ級'            },
+  { min: 22000, emoji:'🚄', name:'リニア級'            },
+  { min: 23000, emoji:'🎉', name:'すごい級'            },
+  { min: 24000, emoji:'📞', name:'開発者に問い合わせ級'},
+];
+
+function getRank(score) {
+  let r = RANKS[0];
+  for (const rank of RANKS) { if (score >= rank.min) r = rank; }
+  return r;
+}
+let G = {};
+function initState() {
+  G = {
+    score:0, setIndex:0, phaseIndex:0, qInPhase:0,
+    combo:0, maxCombo:0, meterPct:0,
+    drawing:false, drawn:[], judged:false,
+    timeLeft:GAME_TIME, baseTime:GAME_TIME, timerId:null, timeUp:false,
+    currentQ:null,
+    allScores:[],    // {type, label, accuracy, earned, quadrant, angleDeg, speed, shake, precision}
+    phaseScores:[],  // 今フェーズの精度
+    drawStartTime:0, // 描き始めた時刻
+    // 3軸累積
+    speedList:[],
+    shakeList:[],
+    precisionList:[],
+  };
+  lastAngle = -999;
+}
+
+// ============================================================
+// CANVAS
+// ============================================================
+const canvas = document.getElementById('gc');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const area = canvas.parentElement.getBoundingClientRect();
+  const W = Math.min(area.width - 20, (area.height - 20) * 1.55, 640);
+  const H = W / 1.55;
+  canvas.width = Math.floor(W);
+  canvas.height = Math.floor(H);
+}
+
+function getPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const s = e.touches ? e.touches[0] : e;
+  // 筆圧：PointerEventのpressure（0〜1）。タッチ・マウスは0.5固定
+  const pressure = (e.pressure !== undefined && e.pressure > 0) ? e.pressure : 0.5;
+  // t：速度計測用のタイムスタンプ（区間速度から手の速さを測る）
+  return { x: s.clientX - r.left, y: s.clientY - r.top, p: pressure, t: performance.now() };
+}
+
+canvas.addEventListener('pointerdown', e => {
+  if (G.judged || G.timeLeft <= 0) return;
+  G.drawing = true; G.drawn = [];
+  G.drawStartTime = performance.now();
+  document.getElementById('chint').style.opacity = '0';
+  G.drawn.push(getPos(e));
+  canvas.setPointerCapture(e.pointerId);
+  if (!G.timerId) startTimer();
+});
+canvas.addEventListener('pointermove', e => {
+  if (!G.drawing || G.judged) return;
+  G.drawn.push(getPos(e));
+  render();
+});
+canvas.addEventListener('pointerup', e => {
+  if (!G.drawing) return;
+  G.drawing = false;
+  // ペンを離した瞬間の座標を確実に記録（pointermoveが止まっていても終点を取る）
+  const pos = getPos(e);
+  const last = G.drawn[G.drawn.length - 1];
+  if (!last || Math.hypot(pos.x - last.x, pos.y - last.y) > 0.5) {
+    G.drawn.push(pos);
+  }
+  if (G.drawn.length > 4) judge();
+});
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#f2ede4'; ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = 'rgba(0,0,0,.04)'; ctx.lineWidth = .5;
+  for (let x = 0; x < W; x += 24){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+  for (let y = 0; y < H; y += 24){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+
+  const q = G.currentQ;
+  if (!q) return;
+  const { pts, tol } = q;
+
+  // ガイド帯（シビア判定に合わせて細め）
+  ctx.strokeStyle = 'rgba(192,57,43,.10)';
+  ctx.lineWidth = tol * 2; ctx.lineCap='round'; ctx.lineJoin='round';
+  drawPath(pts);
+
+  // お手本線
+  ctx.strokeStyle = 'rgba(192,57,43,.55)';
+  ctx.lineWidth = 2; ctx.setLineDash([8,5]);
+  drawPath(pts); ctx.setLineDash([]);
+
+  // 始点
+  ctx.fillStyle = 'rgba(192,57,43,.9)';
+  ctx.beginPath(); ctx.arc(pts[0].x,pts[0].y,7,0,Math.PI*2); ctx.fill();
+  // 終点
+  ctx.fillStyle = 'rgba(192,57,43,.35)';
+  ctx.beginPath(); ctx.arc(pts[pts.length-1].x,pts[pts.length-1].y,7,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = 'rgba(192,57,43,.8)'; ctx.font = 'bold 11px sans-serif';
+  ctx.fillText('START', pts[0].x+10, pts[0].y-12);
+
+  // ユーザー線（筆圧対応：セグメントごとに線幅を変える）
+  if (G.drawn.length > 1) {
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#0a0a0f';
+    for (let i = 1; i < G.drawn.length; i++) {
+      const prev = G.drawn[i-1];
+      const curr = G.drawn[i];
+      // 前後の筆圧を平均して線幅に変換（0.5〜3.5px）
+      const avgP = (prev.p + curr.p) / 2;
+      const lw = 0.5 + avgP * 3.0;
+      ctx.lineWidth = lw;
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
+      // スムージング：中間点へのquadratic
+      if (i < G.drawn.length - 1) {
+        const mx = (curr.x + G.drawn[i+1].x) / 2;
+        const my = (curr.y + G.drawn[i+1].y) / 2;
+        ctx.quadraticCurveTo(curr.x, curr.y, mx, my);
+      } else {
+        ctx.lineTo(curr.x, curr.y);
+      }
+      ctx.stroke();
+    }
+  }
+}
+
+function drawPath(pts) {
+  ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+  for (let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.stroke();
+}
+
+// ============================================================
+// TIMER（寿司打方式：30秒の持ち時間が減り続ける）
+// ============================================================
+function startTimer() {
+  if (G.timerId) return;
+  G.timerId = setInterval(() => {
+    G.timeLeft -= 80; updateTimeUI();
+    if (G.timeLeft <= 0) {
+      G.timeLeft = 0; updateTimeUI();
+      clearInterval(G.timerId); G.timerId = null;
+      G.timeUp = true;
+      // 描きかけがあれば判定だけして終了、なければ即終了
+      if (G.drawing) {
+        // 描いてる途中：手を離した時にjudge→そこでendGameされる
+      } else if (!G.judged) {
+        endGame();
+      }
+    }
+  }, 80);
+}
+function stopTimer() { if(G.timerId){clearInterval(G.timerId);G.timerId=null;} }
+
+function updateTimeUI() {
+  const sec = Math.max(0, Math.ceil(G.timeLeft/1000));
+  const el = document.getElementById('time-num');
+  el.textContent = sec;
+  el.className = 'hud-time-num'+(sec<=8?' urgent':'');
+  const pct = Math.max(0, G.timeLeft/G.baseTime*100);
+  const bar = document.getElementById('time-bar');
+  bar.style.width = pct+'%';
+  bar.style.background = pct>50?'var(--red)':pct>25?'var(--orange)':'#ff3333';
+}
+
+function addTime(ms) {
+  G.timeLeft += ms;
+  G.baseTime = Math.max(G.baseTime, G.timeLeft);
+  showToast('+'+(ms/1000).toFixed(1)+'sec!');
+  updateTimeUI();
+}
+function showToast(msg) {
+  const el=document.createElement('div');
+  el.className = msg.startsWith('-') ? 'penalty-toast' : 'bonus-toast';
+  el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1100);
+}
+
+// ============================================================
+// JUDGE
+// ============================================================
+function judge() {
+  if (G.judged) return;
+  G.judged = true;
+
+  const q = G.currentQ;
+  const elapsedMs = performance.now() - G.drawStartTime;
+
+  // 3軸計測
+  const speed     = calcSpeed(G.drawn, elapsedMs);
+  const shake     = calcShake(G.drawn, q.pts, q.tol);
+  const precision = calcPrecision(G.drawn, q.pts, q.tol, q.type);
+
+  // ゲーム判定用精度（従来通り）
+  const accuracy = precision;
+
+  // 倍率の閾値も 90→85 / 80→75 / 70→65 / 55→50 と5点下げ、採点厳格化（PRECが約5点辛く
+  // なった分）に報酬を合わせる。これで「同じ線質なら前と同じ点数」＝総得点の基準を維持。
+  const multi = accuracy>=85?1.5:accuracy>=75?1.2:accuracy>=65?1.0:accuracy>=50?.6:.2;
+  const earned = Math.round(q.basePt * multi);
+
+  // 減点詳細を計算（弱点分析用）
+  const { outsideRatio, avgExcess } = calcOvershoot(G.drawn, q.pts, q.tol);
+  const endPenalty = calcEndpointPenalty(G.drawn, q.pts);
+  const hookPenalty = calcHookPenalty(G.drawn);
+  const deductions = {
+    overshoot: Math.round(outsideRatio * 50 + Math.min(avgExcess / q.tol, 1) * 25),
+    endpoint: endPenalty,
+    hook: hookPenalty,
+  };
+
+  G.score += earned;
+  G.phaseScores.push(accuracy);
+  G.allScores.push({ type:q.type, label:q.label, accuracy, earned, group:q.group||'—', angleDeg:q.angleDeg||null, lenPx:q.lenPx||null, speed, shake, precision, deductions });
+
+  // 累積に追加
+  G.speedList.push(speed);
+  G.shakeList.push(shake);
+  G.precisionList.push(precision);
+
+  // はみ出しが大きい場合は時間ペナルティ（-2秒）
+  if (outsideRatio > 0.3) {
+    G.timeLeft = Math.max(0, G.timeLeft - 2000);
+    showToast('-2sec');
+    updateTimeUI();
+  }
+
+  // コンボ・メーター（2〜3問でMAX）
+  if (accuracy >= 65) {
+    G.combo++;
+    if (G.combo > G.maxCombo) G.maxCombo = G.combo;
+    const gain = accuracy>=80?35:accuracy>=70?26:18;
+    G.meterPct = Math.min(100, G.meterPct+gain);
+    if (G.meterPct >= 100) {
+      G.meterPct = 0;
+      addTime(G.combo>=5?3000:G.combo>=3?2000:1000);
+    } else {
+
+    }
+    if (G.combo >= 2) { showComboFly(G.combo); }
+  } else {
+
+    G.combo = 0;
+    G.meterPct = Math.max(0, G.meterPct-30);
+  }
+
+  updateMeterUI();
+  document.getElementById('hud-score').textContent = G.score;
+  showScorePop(earned, accuracy);
+  showFeedback(accuracy);
+  updateProgressBar();
+
+  // デバッグキャプチャ（描いた線＋スコアの瞬間を保存）
+  captureDebugFrame(q, G.drawn, { speed, shake, precision, earned, deductions });
+
+  setTimeout(() => {
+    hideFeedback();
+    if (G.timeUp || G.timeLeft <= 0) { endGame(); return; }
+    G.qInPhase++;
+    if (G.qInPhase >= Q_PER_PHASE) handlePhaseEnd();
+    loadQ();
+  }, 500);
+}
+
+// ============================================================
+// DEBUG CAPTURE
+// ============================================================
+let debugMode = false;
+let debugCount = 0;
+let debugFrames = []; // { dataURL, label } を溜める
+
+function toggleDebug() {
+  debugMode = !debugMode;
+  const btn = document.getElementById('debug-toggle');
+  btn.textContent = debugMode ? 'DEBUG ON' : 'DEBUG OFF';
+  btn.style.color = debugMode ? '#f0c040' : 'rgba(255,255,255,.5)';
+  btn.style.borderColor = debugMode ? '#f0c040' : 'rgba(255,255,255,.2)';
+}
+
+function captureDebugFrame(q, drawn, scores) {
+  if (!debugMode) return;
+  debugCount++;
+
+  const oc = document.createElement('canvas');
+  const W = canvas.width, H = canvas.height;
+  const INFO_H = 120;
+  oc.width = W;
+  oc.height = H + INFO_H;
+  const c = oc.getContext('2d');
+
+  // キャンバス内容をコピー
+  c.fillStyle = '#1a1a2e';
+  c.fillRect(0, 0, W, H + INFO_H);
+  c.drawImage(canvas, 0, 0);
+
+  // スコアパネル
+  const py = H + 8;
+  c.fillStyle = '#12122a';
+  c.fillRect(0, H, W, INFO_H);
+  c.fillStyle = 'rgba(255,255,255,.1)';
+  c.fillRect(0, H, W, 1);
+
+  // タイトル
+  c.font = 'bold 12px monospace';
+  c.fillStyle = '#f0c040';
+  c.fillText(`#${debugCount}  ${q.type}  ${q.label}`, 10, py + 14);
+
+  // 精度スコア（大きく右寄り）
+  const prec = scores.precision;
+  c.font = 'bold 32px monospace';
+  c.fillStyle = prec>=90?'#4fc3f7':prec>=80?'#81c784':prec>=70?'#fff176':prec>=55?'#ffb74d':'#e57373';
+  c.fillText(prec, W - 62, py + 40);
+  c.font = '9px monospace';
+  c.fillStyle = 'rgba(255,255,255,.4)';
+  c.fillText('PREC', W - 58, py + 52);
+
+  // 3軸バー
+  const bars = [
+    { label:'SPD', val:scores.speed,     col:'#4fc3f7' },
+    { label:'SHK', val:scores.shake,     col:'#81c784' },
+    { label:'PRC', val:scores.precision, col:'#ce93d8' },
+  ];
+  const bw = (W - 100) / 3 - 6;
+  bars.forEach((b, i) => {
+    const bx = 10 + i*(bw+6), by = py + 60;
+    c.font = '8px monospace'; c.fillStyle = 'rgba(255,255,255,.4)';
+    c.fillText(b.label, bx, by);
+    c.fillStyle = 'rgba(255,255,255,.1)';
+    c.fillRect(bx, by+3, bw, 7);
+    c.fillStyle = b.col;
+    c.fillRect(bx, by+3, bw*(b.val/100), 7);
+    c.font = '9px monospace'; c.fillStyle = '#fff';
+    c.fillText(b.val, bx+bw+2, by+10);
+  });
+
+  // 減点内訳
+  const ded = scores.deductions;
+  c.font = '9px monospace'; c.fillStyle = 'rgba(255,255,255,.4)';
+  c.fillText(`はみ出し:-${ded.overshoot}  終点:-${ded.endpoint}  フック:-${ded.hook}`, 10, py + 90);
+
+  // 獲得pt
+  c.font = 'bold 11px monospace'; c.fillStyle = '#f0c040';
+  c.fillText(`+${scores.earned}pt`, 10, py + 108);
+
+  debugFrames.push({
+    dataURL: oc.toDataURL('image/png'),
+    label: `#${debugCount} ${q.type} ${prec}pt`,
+  });
+}
+
+function timeoutMiss() {
+  G.judged = true;
+  G.phaseScores.push(0);
+  G.allScores.push({ type:G.currentQ?G.currentQ.type:'—', label:'時間切れ', accuracy:0, earned:0, group:G.currentQ?G.currentQ.group:'—', quadrant:'—' });
+  G.combo = 0; G.meterPct = Math.max(0, G.meterPct-25);
+  updateMeterUI(); showFeedback(0); updateProgressBar();
+  setTimeout(() => {
+    hideFeedback();
+    if (G.timeUp || G.timeLeft <= 0) { endGame(); return; }
+    G.qInPhase++;
+    if (G.qInPhase >= Q_PER_PHASE) handlePhaseEnd();
+    loadQ();
+  }, 500);
+}
+
+function handlePhaseEnd() {
+  G.phaseIndex++;
+  G.qInPhase = 0;
+  G.phaseScores = [];
+  if (G.phaseIndex >= PHASES.length) {
+    G.phaseIndex = 0;
+    G.setIndex++;
+    document.getElementById('hud-set').textContent = G.setIndex+1;
+    addTime(7000);
+
+  }
+  // loadQはjudge/timeoutMissのsetTimeout側で呼ぶので、ここでは呼ばない
+}
+
+function showFailBanner(avgAcc) {
+  stopTimer();
+  const inner = document.getElementById('fail-inner');
+  inner.innerHTML = `
+    <div class="fail-title">精度不足</div>
+    <div class="fail-sub">
+      ${PHASES[G.phaseIndex].name}フェーズ 平均精度：${Math.round(avgAcc)}%<br>
+      （通過ライン：${PASS_THRESHOLD}%以上）
+    </div>
+  `;
+  document.getElementById('fail-banner').classList.add('show');
+  setTimeout(() => {
+    document.getElementById('fail-banner').classList.remove('show');
+    endGame();
+  }, 2200);
+}
+
+// ============================================================
+// 3軸計測
+// ============================================================
+
+// 速度スコア（0〜100）：速いほど高得点
+// 線の長さに対して何秒かかったかで算出
+function calcSpeed(drawn, elapsedMs) {
+  if (drawn.length < 4) return 0;
+  // 各点のタイムスタンプから「区間ごとの速度（px/s）」を求め、その60パーセンタイルで評価する。
+  // 平均だと始点・終点の減速時間が短い線ほど大きく効いて不当に低く出る（長さバイアス）。
+  // 区間速度の代表値を使うことで、線の長さに依存せず手の速さそのものを測れる。
+  const vels = [];
+  for (let i = 1; i < drawn.length; i++) {
+    const dt = (drawn[i].t - drawn[i-1].t) / 1000;
+    if (dt <= 0) continue;
+    const d = Math.hypot(drawn[i].x - drawn[i-1].x, drawn[i].y - drawn[i-1].y);
+    vels.push(d / dt);
+  }
+  if (!vels.length) {
+    // 旧来のフォールバック（タイムスタンプが無い場合）
+    if (elapsedMs <= 0) return 0;
+    let L = 0;
+    for (let i = 1; i < drawn.length; i++) L += Math.hypot(drawn[i].x-drawn[i-1].x, drawn[i].y-drawn[i-1].y);
+    return Math.min(100, Math.max(0, Math.round((L / (elapsedMs/1000)) / 6)));
+  }
+  vels.sort((a, b) => a - b);
+  const v = vels[Math.min(vels.length - 1, Math.floor(vels.length * 0.6))];
+  // 目安：150px/s→遅い(25点), 400px/s→普通(67点), 600px/s→速い(100点)
+  return Math.min(100, Math.max(0, Math.round(v / 6)));
+}
+
+// ブレスコア（0〜100）：滑らかさ＋ガイド帯はみ出しペナルティ
+// 純粋な滑らかさ（0〜100）：はみ出しは見ず、線の震え/ガタつきだけを測る
+// precisionの「美しさ」評価にも、calcShakeにも共通で使う土台
+function calcSmoothness(drawn) {
+  if (drawn.length < 5) return 100;
+
+  // 強いスムージング（5点移動平均を3回）
+  function smooth(pts) {
+    return pts.map((p, i) => {
+      if (i < 2 || i >= pts.length - 2) return p;
+      return {
+        x: (pts[i-2].x + pts[i-1].x + p.x + pts[i+1].x + pts[i+2].x) / 5,
+        y: (pts[i-2].y + pts[i-1].y + p.y + pts[i+1].y + pts[i+2].y) / 5,
+      };
+    });
+  }
+  const smoothed = smooth(smooth(smooth(drawn)));
+
+  // 元データとスムージング後の平均距離（＝震えの大きさ）
+  let sumDiff = 0;
+  for (let i = 0; i < drawn.length; i++) {
+    sumDiff += Math.hypot(drawn[i].x - smoothed[i].x, drawn[i].y - smoothed[i].y);
+  }
+  const avgDiff = sumDiff / drawn.length;
+  return Math.min(100, Math.max(0, Math.round(100 - avgDiff * 10)));
+}
+
+// ブレスコア（0〜100）：滑らかさ ＋ ガイド帯はみ出しペナルティ（3軸表示用）
+function calcShake(drawn, path, tol) {
+  if (drawn.length < 5) return 100;
+  let score = calcSmoothness(drawn);
+
+  // ガイド帯はみ出しペナルティ（はみ出しが多いほど大きく減点）
+  if (path && tol) {
+    const { outsideRatio, avgExcess } = calcOvershoot(drawn, path, tol);
+    const penalty = Math.round(outsideRatio * 35 + Math.min(avgExcess / tol, 1) * 15);
+    score = Math.max(0, score - penalty);
+  }
+
+  return score;
+}
+
+// ガイド帯からのはみ出し率を計算（0〜1、0=全部内側、1=全部外側）
+function calcOvershoot(drawn, path, tol) {
+  if (!drawn.length) return 0;
+  let outside = 0;
+  let totalExcess = 0;
+  for (const dp of drawn) {
+    let minD = Infinity;
+    for (const pt of path) {
+      const d = Math.hypot(pt.x-dp.x, pt.y-dp.y);
+      if (d < minD) minD = d;
+    }
+    if (minD > tol) {
+      outside++;
+      totalExcess += (minD - tol); // はみ出した量
+    }
+  }
+  const outsideRatio = outside / drawn.length;        // はみ出した点の割合
+  const avgExcess = outside > 0 ? totalExcess / outside : 0; // 平均はみ出し量
+  return { outsideRatio, avgExcess };
+}
+
+// 始点・終点のズレをペナルティ計算
+function calcEndpointPenalty(drawn, path) {
+  if (drawn.length < 2) return 25;
+  const startPt = path[0];
+  const endPt   = path[path.length - 1];
+  let penalty = 0;
+
+  // 始点：20px以内は0点、離れるほど最大-5点
+  const startDist = Math.hypot(drawn[0].x - startPt.x, drawn[0].y - startPt.y);
+  if (startDist > 20) penalty += Math.min(5, Math.round((startDist - 20) * 0.25));
+
+  // 終点：6px以内は0点、超えた分だけ比例して最大-25点。
+  // ※ 行き過ぎ（終点を通り過ぎる）も止め過ぎ（手前で止める）も、終点からの距離で
+  //   等しく捉える。デッドゾーンを10→6pxに詰めて「終点で止める精度」を要求する。
+  const endDist = Math.hypot(drawn[drawn.length-1].x - endPt.x, drawn[drawn.length-1].y - endPt.y);
+  if (endDist > 6) penalty += Math.min(25, Math.round((endDist - 6) * 0.5));
+
+  return penalty;
+}
+
+// 直線らしさスコア：お手本の直線方向に対して描いた線が一直線に近いほど高得点
+function calcLinearity(drawn, path) {
+  if (drawn.length < 3) return 100;
+  // お手本の始点→終点を基準直線にする
+  const p1 = path[0];
+  const p2 = path[path.length - 1];
+  const dx = p2.x - p1.x, dy = p2.y - p1.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 1) return 100;
+  // 描いた各点からお手本直線への垂線距離
+  // ※ 全点平均だと「上部だけ膨らんで残りは真っ直ぐ」な線（#43型）で、
+  //   膨らみが直線部分に薄められて高得点になってしまう。
+  //   曲線accuracyと同じく "悪い方35%だけ" を平均して局所の歪みを捉える。
+  const dists = [];
+  for (const p of drawn) {
+    dists.push(Math.abs(dy*(p.x-p1.x) - dx*(p.y-p1.y)) / len);
+  }
+  dists.sort((a, b) => b - a);                  // 大きい（悪い）順
+  const k = Math.max(1, Math.round(dists.length * 0.35));
+  let sum = 0;
+  for (let i = 0; i < k; i++) sum += dists[i];
+  const worstDist = sum / k;
+  // 悪い方の平均ズレ1pxまでは満点（センサーの微細ノイズだけ見逃す）。
+  // それ超は減点。2pxで96、3pxで91…と天井付近から反応し、
+  // 「少しズレているのに100」を解消する。
+  return Math.min(100, Math.max(0, Math.round(worstDist <= 1 ? 100 : 100 - (worstDist - 1) * 12)));
+}
+
+// フック検出：終点付近で急に方向が変わっていないか
+// 旧版は「始点→終点のチョード」と「テール」の角度を見ていたが、曲線では
+// 自然にズレるため一度も発火しなかった。先端の方向を「その直前の方向」と
+// 比べるローカル方式に変更。滑らかな曲線は方向が緩やかに変わるので誤検知せず、
+// 先端だけが急に折れる本物のフックを直線・曲線どちらでも捉える。
+function calcHookPenalty(drawn) {
+  // 離し際の最終点（pointerupの跳ね）を1つ除外してから測る。
+  // Apple Pencilを離す瞬間に最終点が数px横へ跳ぶことがあり、それを「折れ」と
+  // 誤検知して綺麗な線まで減点していた。最終点だけ落とせば、本物の持続的フック
+  // （最後の12%が曲がる）は残しつつ誤爆だけ消える。
+  const d = drawn.length > 12 ? drawn.slice(0, -1) : drawn;
+  if (d.length < 12) return 0;
+  const n = d.length;
+  const tipN = Math.max(3, Math.round(n * 0.12));
+  // 先端ベクトル（最後の12%）と、その直前ベクトル（さらに前の12%）
+  const tipA = d[n - 1 - tipN],     tipB = d[n - 1];
+  const preA = d[n - 1 - tipN * 2], preB = d[n - 1 - tipN];
+  const tdx = tipB.x - tipA.x, tdy = tipB.y - tipA.y, tl = Math.hypot(tdx, tdy);
+  const pdx = preB.x - preA.x, pdy = preB.y - preA.y, pl = Math.hypot(pdx, pdy);
+  if (tl < 5 || pl < 5) return 0; // 移動量が小さすぎる場合はスキップ
+  const cosAngle = (tdx * pdx + tdy * pdy) / (tl * pl);
+  const angleDeg = Math.acos(Math.max(-1, Math.min(1, cosAngle))) * 180 / Math.PI;
+  // 20°までは滑らかな線の自然な曲がりとして許容。それ超で段階的に減点（上限-12）。
+  if (angleDeg <= 20) return 0;
+  return Math.min(12, Math.round((angleDeg - 20) * 0.45));
+}
+
+// 円弧らしさスコア：曲率が一定なほど高得点
+// 3点ずつ取って曲率半径を計算し、その分散が小さいほど高得点
+function calcArcness(drawn) {
+  if (drawn.length < 6) return 100;
+  const radii = [];
+  const step = Math.max(1, Math.floor(drawn.length / 20));
+  for (let i = step; i < drawn.length - step; i += step) {
+    const a = drawn[i - step], b = drawn[i], c = drawn[i + step];
+    // 3点を通る円の半径を計算
+    const ax = a.x - b.x, ay = a.y - b.y;
+    const cx = c.x - b.x, cy = c.y - b.y;
+    const D = 2 * (ax * cy - ay * cx);
+    if (Math.abs(D) < 0.001) continue; // 直線に近い（無限大半径）
+    const ux = (cy * (ax*ax + ay*ay) - ay * (cx*cx + cy*cy)) / D;
+    const uy = (ax * (cx*cx + cy*cy) - cx * (ax*ax + ay*ay)) / D;
+    const R = Math.hypot(ux, uy);
+    if (R < 5000) radii.push(R); // 大きすぎる値（ほぼ直線）は除外
+  }
+  if (radii.length < 2) return 80;
+  // 曲率半径の変動係数（標準偏差/平均）が小さいほど均一な弧
+  const mean = radii.reduce((a,b)=>a+b,0) / radii.length;
+  const variance = radii.reduce((s,r)=>s+(r-mean)**2,0) / radii.length;
+  const cv = Math.sqrt(variance) / mean; // 変動係数（0に近いほど均一）
+  return Math.min(100, Math.max(0, Math.round(100 - cv * 50)));
+}
+
+// 精度スコア（0〜100）
+function calcPrecision(drawn, path, tol, qType) {
+  const cov = calcCoverage(drawn, path, tol);
+  const acc = calcAccuracy(drawn, path, tol);
+
+  // 達成率：お手本の始点・終点に「実際どれだけ届いたか」で測る。
+  // ※ 旧版は弧長比（描いた線の長さ / お手本の長さ）だったが、終点手前でカーブして
+  //   丸めると長さが稼げてしまい、終点に届いていなくても達成率1.0になっていた。
+  //   端への到達距離で測ることで、「届いていない」を正しくスコアに反映する。
+  let pathLen = 0;
+  for (let i = 1; i < path.length; i++) {
+    pathLen += Math.hypot(path[i].x - path[i-1].x, path[i].y - path[i-1].y);
+  }
+  const startGap = Math.hypot(drawn[0].x - path[0].x, drawn[0].y - path[0].y);
+  const endGap   = Math.hypot(drawn[drawn.length-1].x - path[path.length-1].x,
+                              drawn[drawn.length-1].y - path[path.length-1].y);
+  // tol までは「届いた」とみなし、超えた不足分をお手本長に対する割合で引く
+  const miss = Math.max(0, startGap - tol) + Math.max(0, endGap - tol);
+  const achieveFactor = pathLen > 0 ? Math.max(0, Math.min(1, 1 - miss / pathLen)) : 1;
+
+  let score = Math.round((cov * 0.35 + acc * 0.65) * achieveFactor);
+
+  // ── 形状評価：価値基準に沿って配合する ──
+  // 直線＝「真っ直ぐであること」を主役に
+  // 曲線＝「スッと美しい＝滑らかであること」を主役に
+  if (qType === '直線①' || qType === '直線②') {
+    // 真っ直ぐさを40%ブレンド（直線＝真っ直ぐが価値基準なので主役に近づける）
+    const linearity = calcLinearity(drawn, path);
+    score = Math.round(score * 0.60 + linearity * 0.40);
+  } else if (qType === '曲線①' || qType === '曲線②') {
+    // 「スッと美しい」を評価する
+    // ※ arcness（曲率の均一さ）は手描き入力で数値が暴れて使い物にならず、
+    //   実質「全員に課す罰金」として働いていたため廃止した。
+    // 代わりに ① accGraded（中央を通ったか） ② smoothness（震えの無さ）で評価する。
+    const cov  = calcCoverage(drawn, path, tol);
+    const accC = calcAccuracyGraded(drawn, path, tol); // 帯の中央ほど高得点
+    const baseC = (cov * 0.30 + accC * 0.70) * achieveFactor;
+    const smoothness = calcSmoothness(drawn);          // 震えの無さ
+    const smoothBonus = (smoothness - 90) * 0.35;      // 90超で+、下回ると-
+    score = Math.round(baseC + smoothBonus);
+    score = Math.max(0, Math.min(100, score));
+  }
+
+  // ── 以下、ペナルティはブレンド後に引く（効果が薄まらないように）──
+
+  // ガイド帯はみ出しペナルティ
+  const { outsideRatio, avgExcess } = calcOvershoot(drawn, path, tol);
+  const overshootPenalty = Math.round(outsideRatio * 50 + Math.min(avgExcess / tol, 1) * 25);
+  score = Math.max(0, score - overshootPenalty);
+
+  // 始点・終点ペナルティ（始点-5・終点-20）
+  const endPenalty = calcEndpointPenalty(drawn, path);
+  score = Math.max(0, score - endPenalty);
+
+  // フックペナルティ
+  const hookPenalty = calcHookPenalty(drawn);
+  score = Math.max(0, score - hookPenalty);
+
+  return Math.min(100, Math.max(0, score));
+}
+function calcCoverage(drawn, path, tol) {
+  if (!drawn.length) return 0;
+  let hit = 0;
+  for (const pt of path) {
+    for (const dp of drawn) {
+      if (Math.hypot(pt.x-dp.x, pt.y-dp.y) < tol*1.4) { hit++; break; }
+    }
+  }
+  return Math.min(100, hit/path.length*100);
+}
+function calcAccuracy(drawn, path, tol) {
+  if (!drawn.length) return 0;
+  // tol以内なら満点、超えた分だけ比例して減点
+  // 「ガイド帯の中にいるか」を基準にすることで、曲率のズレによる不当な減点を防ぐ
+  let sum = 0;
+  for (const dp of drawn) {
+    let min = Infinity;
+    for (const pt of path) {
+      const d = Math.hypot(pt.x - dp.x, pt.y - dp.y);
+      if (d < min) min = d;
+    }
+    // tol以内=0点引かれない、tol*2以上=全額引かれる
+    sum += Math.max(0, min - tol);
+  }
+  // 平均超過量をtolで正規化して減点
+  const avgExcess = sum / drawn.length;
+  return Math.max(0, Math.min(100, Math.round(100 - (avgExcess / tol) * 100)));
+}
+
+// 段階的accuracy（曲線用）：帯の「中にいるか」だけでなく「中央を通ったか」を評価する。
+// tol*0.5 以内は満点、そこから tol*2.2 まで緩やかに減点。
+// 二値の帯モデルと違い、帯内でも中央寄りの線ほど高得点になるので、
+// 「形は滑らかだが位置がずれた線」を正しく中央線より下に置ける。
+function calcAccuracyGraded(drawn, path, tol) {
+  if (!drawn.length) return 0;
+  const free = tol * 0.2;   // この距離までは満点（中央付近）
+  const far  = tol * 1.6;   // この距離でゼロ
+  // 各点の「中央からの近さ」を0〜100で採点し、
+  // 全点平均ではなく "悪い方35%だけ" を平均する。
+  // 全点平均だと、片端だけ大きくズレても良い大多数に薄められて高得点になってしまう
+  // （目には見えるのにスコアに出ない）。悪い部分を重く見ることで、局所のズレを拾う。
+  const scores = [];
+  for (const dp of drawn) {
+    let min = Infinity;
+    for (const pt of path) {
+      const d = Math.hypot(pt.x - dp.x, pt.y - dp.y);
+      if (d < min) min = d;
+    }
+    scores.push(min <= free ? 100 : Math.max(0, 100 - (min - free) / (far - free) * 100));
+  }
+  scores.sort((a, b) => a - b);                 // 低い（悪い）順
+  const k = Math.max(1, Math.round(scores.length * 0.35));
+  let sum = 0;
+  for (let i = 0; i < k; i++) sum += scores[i];
+  return Math.round(sum / k);
+}
+
+// ============================================================
+// UI
+// ============================================================
+function updateProgressBar() {
+  document.querySelectorAll('.set-seg').forEach((seg,i) => {
+    seg.className = 'set-seg '+(i<G.qInPhase?'done':i===G.qInPhase?'active':'upcoming');
+  });
+}
+function updateMeterUI() {
+  const fill=document.getElementById('meter-fill');
+  fill.style.width=G.meterPct+'%';
+  fill.className='meter-fill'+(G.meterPct>=80?' charged':'');
+  document.getElementById('combo-lbl').textContent='×'+G.combo;
+}
+function showScorePop(pt, acc) {
+  const rect=canvas.getBoundingClientRect();
+  const el=document.createElement('div');
+  el.className='score-pop';
+  el.style.left=(rect.left+rect.width/2-30)+'px';
+  el.style.top=(rect.top+rect.height/2-20)+'px';
+  el.style.color=acc>=80?'var(--gold2)':acc>=65?'var(--green)':acc>=50?'var(--orange)':'var(--red)';
+  el.textContent='+'+pt;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1000);
+}
+function showFeedback(score) {
+  let cls,lbl;
+  if(score>=90){cls='ex';lbl='神業！';}
+  else if(score>=80){cls='ex';lbl='素晴らしい';}
+  else if(score>=70){cls='gd';lbl='いい線だ';}
+  else if(score>=55){cls='ok';lbl='もう少し';}
+  else{cls='bd';lbl='やり直せ';}
+  const c=cls==='ex'?'var(--gold2)':cls==='gd'?'var(--green)':cls==='ok'?'var(--orange)':'var(--red)';
+  document.getElementById('fb-inner').innerHTML=`<div class="fb-num ${cls}">${score}</div><div class="fb-lbl" style="color:${c}">${lbl}</div>`;
+  document.getElementById('fb-ov').classList.add('show');
+}
+function hideFeedback(){document.getElementById('fb-ov').classList.remove('show');}
+function showComboFly(n){
+  const el=document.createElement('div');
+  el.className='combo-fly';el.textContent=n+' COMBO!';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),850);
+}
+
+// ============================================================
+// FLOW
+// ============================================================
+async function shareResult(){
+  const el = document.getElementById('result-wrap');
+  const debug = document.getElementById('debug-sheet');
+  const prevDebug = debug.style.display;
+  debug.style.display = 'none';
+  let canvas;
+  try {
+    canvas = await html2canvas(el,{backgroundColor:'#0d0d12',scale:2,useCORS:true,logging:false});
+  } catch(e){
+    debug.style.display = prevDebug;
+    return;
+  }
+  debug.style.display = prevDebug;
+  const blob = await new Promise(res=>canvas.toBlob(res,'image/png'));
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'penire-kiwamatter.png';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+const AD_CATCHES = [
+  '驚きのAmazonレビュー ★4.8！',
+  'そろそろ休む？読む？',
+  'ペン入れ疲れに…飛ぶぞ？',
+  '新感覚 マンガ技術体感マンガ',
+  '受賞・デビューができない人へ',
+  '読者に「届く」マンガになる',
+];
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='s-ad'){
+    const el=document.getElementById('ad-catch-text');
+    if(el) el.textContent=AD_CATCHES[Math.floor(Math.random()*AD_CATCHES.length)];
+  }
+}
+
+function startGame(){
+  initState();
+  debugCount = 0;
+  debugFrames = [];
+  showScreen('s-game');
+  resizeCanvas();
+
+
+  // 進捗バー初期化
+  const prog=document.getElementById('set-progress');
+  prog.innerHTML='';
+  for(let i=0;i<Q_PER_PHASE;i++){
+    const seg=document.createElement('div');
+    seg.className='set-seg '+(i===0?'active':'upcoming');
+    prog.appendChild(seg);
+  }
+
+  loadQ(); // バナーなしで即開始
+}
+
+function loadQ() {
+  G.drawn=[]; G.drawing=false; G.judged=false;
+
+  G.currentQ = GENERATORS[G.phaseIndex](canvas.width, canvas.height);
+
+  const phase = PHASES[G.phaseIndex];
+  const phaseEl=document.getElementById('hud-phase');
+  phaseEl.textContent=phase.name;
+  phaseEl.className='hud-phase '+phase.cls;
+  document.getElementById('hud-qinfo').textContent='セット'+(G.setIndex+1)+' — '+(G.qInPhase+1)+'問目 / '+Q_PER_PHASE+'問';
+  document.getElementById('chint').style.opacity='1';
+  document.getElementById('hud-set').textContent=G.setIndex+1;
+  updateProgressBar();
+
+  // 時間はゲーム開始時のみセット。ここではリセットしない（寿司打方式）
+  updateTimeUI();
+
+  render();
+}
+
+function endGame(){stopTimer();hideFeedback();showResult();}
+
+// ============================================================
+// RESULT
+// ============================================================
+function showResult(){
+  showScreen('s-result');
+
+  const rank = getRank(G.score);
+  document.getElementById('r-rank-emoji').textContent = rank.emoji;
+  document.getElementById('r-rank-name').textContent  = rank.name;
+  document.getElementById('r-score').textContent = G.score.toLocaleString();
+
+  const total   = G.allScores.length;
+  const avgAcc  = total ? Math.round(G.allScores.reduce((s,r)=>s+r.accuracy,0)/total) : 0;
+
+  // 3軸カード
+  const avgSpeed     = G.speedList.length     ? Math.round(G.speedList.reduce((a,b)=>a+b,0)/G.speedList.length)     : 0;
+  const avgShake     = G.shakeList.length     ? Math.round(G.shakeList.reduce((a,b)=>a+b,0)/G.shakeList.length)     : 0;
+  const avgPrecision = G.precisionList.length ? Math.round(G.precisionList.reduce((a,b)=>a+b,0)/G.precisionList.length) : 0;
+
+  function axisColor(v){ return v>=80?'var(--green)':v>=60?'var(--gold)':'var(--red)'; }
+  document.getElementById('r-axis').innerHTML = ['速度','ブレ','精度'].map((lbl,i)=>{
+    const v=[avgSpeed,avgShake,avgPrecision][i];
+    const c=axisColor(v);
+    return `<div class="r-axis-card">
+      <div class="r-axis-lbl">${lbl}</div>
+      <div class="r-axis-val" style="color:${c}">${v}</div>
+      <div class="r-axis-bar"><div class="r-axis-fill" style="width:${v}%;background:${c}"></div></div>
+    </div>`;
+  }).join('');
+
+  // 得意・苦手（直線・曲線それぞれ）
+  const lineScores1 = G.allScores.filter(s=>s.type==='直線①');
+  const lineScores2 = G.allScores.filter(s=>s.type==='直線②');
+  const curveScores1= G.allScores.filter(s=>s.type==='曲線①');
+  const curveScores2= G.allScores.filter(s=>s.type==='曲線②');
+
+  // 角度区間ごとの傾向分析
+  function trendAnalysis(arr, bins) {
+    const results = bins.map(bin => {
+      const inBin = arr.filter(s => s.angleDeg >= bin.min && s.angleDeg <= bin.max);
+      if (!inBin.length) return null;
+      const avg = Math.round(inBin.reduce((a,b)=>a+b.accuracy,0) / inBin.length);
+      // その区間で最も多いtypeを代表とする（矢印の描き分け用）
+      const typeCounts = {};
+      inBin.forEach(s => { typeCounts[s.type] = (typeCounts[s.type]||0)+1; });
+      const repType = Object.keys(typeCounts).sort((a,b)=>typeCounts[b]-typeCounts[a])[0];
+      return { ...bin, avg, count: inBin.length, repType };
+    }).filter(Boolean);
+
+    if (!results.length) return { best:null, worst:null };
+    // 足切り：3本以上引いた区間のみを得意/苦手の候補にする。
+    // （1〜2本だけの区間が偶然で得意/苦手判定を支配するのを防ぐ）
+    // ただし全区間が3本未満の短いプレイでは候補が空になるので、その場合は足切りなしにフォールバック。
+    const MIN_SAMPLES = 3;
+    const eligible = results.filter(r => r.count >= MIN_SAMPLES);
+    const pool = eligible.length ? eligible : results;
+    const sorted = [...pool].sort((a,b)=>b.avg-a.avg);
+    return { best: sorted[0], worst: sorted[sorted.length-1] };
+  }
+
+  // 傾向分析結果をarrowSVG用のオブジェクトに変換（区間の代表typeを使う）
+  function binToScore(bin) {
+    if (!bin) return null;
+    return { angleDeg: bin.center, type: bin.repType };
+  }
+
+  function arrowSVG(s, color) {
+    if (!s || s.angleDeg == null) return '';
+    const deg = s.angleDeg;
+    const type = s.type;
+    const w=30, h=30, cx=15, cy=15, len=11;
+    const rad = deg * Math.PI / 180;
+    const x1=cx+Math.cos(rad)*len, y1=cy-Math.sin(rad)*len;
+    const x2=cx-Math.cos(rad)*len, y2=cy+Math.sin(rad)*len;
+    const mid = `ma${deg}${type}${color.replace(/[^a-zA-Z0-9]/g,'')}`;
+    if (type==='直線①'||type==='直線②') {
+      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="flex-shrink:0">
+        <defs><marker id="${mid}" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="${color}"/></marker></defs>
+        <line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${color}" stroke-width="1.8" stroke-linecap="round" marker-end="url(#${mid})"/>
+        <circle cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="2" fill="${color}"/>
+      </svg>`;
+    } else {
+      // 曲線①：左膨らみ（制御点を左側に）
+      // 曲線②：右膨らみ（制御点を右側に＝符号を反転）
+      const sign = type==='曲線①' ? 1 : -1;
+      const cpx = cx - sign*Math.sin(rad)*len*0.8;
+      const cpy = cy - sign*Math.cos(rad)*len*0.8;
+      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="flex-shrink:0">
+        <defs><marker id="${mid}" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="${color}"/></marker></defs>
+        <path d="M${x1.toFixed(1)},${y1.toFixed(1)} Q${cpx.toFixed(1)},${cpy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" marker-end="url(#${mid})"/>
+        <circle cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="2" fill="${color}"/>
+      </svg>`;
+    }
+  }
+
+  function strCard(label, arr, bins) {
+    const { best, worst } = trendAnalysis(arr, bins);
+    const bestScore  = binToScore(best);
+    const worstScore = binToScore(worst);
+    const bestLabel  = best  ? `${best.avg}点` : '—';
+    const worstLabel = worst ? `${worst.avg}点` : '—';
+    return `<div class="r-str-card">
+      <div class="r-str-title">${label}</div>
+      <div class="r-str-row">
+        <div class="r-str-tag" style="color:#27ae60">得意 ★</div>
+        ${arrowSVG(bestScore,'#27ae60')}
+        <div class="r-str-deg" style="color:#27ae60">${bestScore?bestScore.angleDeg+'°':'—'}</div>
+        <div class="r-str-pt" style="color:#27ae60">${bestLabel}</div>
+      </div>
+      <div class="r-str-row bottom">
+        <div class="r-str-tag" style="color:#c0392b">苦手 ▲</div>
+        ${arrowSVG(worstScore,'#c0392b')}
+        <div class="r-str-deg" style="color:#c0392b">${worstScore?worstScore.angleDeg+'°':'—'}</div>
+        <div class="r-str-pt" style="color:#c0392b">${worstLabel}</div>
+      </div>
+    </div>`;
+  }
+
+  // 角度区間定義
+  const lineBins = [
+    { min:45,  max:65,  center:55,  label:'45〜65°'  },
+    { min:66,  max:85,  center:75,  label:'66〜85°'  },
+    { min:86,  max:110, center:98,  label:'86〜110°' },
+    { min:170, max:179, center:174, label:'170〜179°'},
+    { min:180, max:190, center:185, label:'180〜190°'},
+  ];
+  const curveBins = [
+    { min:45,  max:65,  center:55,  label:'45〜65°'  },
+    { min:66,  max:90,  center:78,  label:'66〜90°'  },
+    { min:91,  max:135, center:112, label:'91〜135°' },
+  ];
+
+  // 得意・苦手：直線（①②合算）・曲線（①②合算）で2枚
+  const lineAll  = [...lineScores1,...lineScores2];
+  const curveAll = [...curveScores1,...curveScores2];
+
+  document.getElementById('r-strength').innerHTML =
+    strCard('直線', lineAll, lineBins) +
+    strCard('曲線', curveAll, curveBins);
+
+  // 弱点分析
+  let totalOvershoot=0, totalEndpoint=0, totalHook=0, count=0;
+  G.allScores.forEach(s=>{
+    if(s.deductions){
+      totalOvershoot += s.deductions.overshoot||0;
+      totalEndpoint  += s.deductions.endpoint||0;
+      totalHook      += s.deductions.hook||0;
+      count++;
+    }
+  });
+  const threeVals=[avgSpeed,avgShake,avgPrecision];
+  const minAxis = threeVals.indexOf(Math.min(...threeVals));
+
+  // ブレが低い場合、①系か②系かでアドバイスを変える
+  const shake1avg = [...lineScores1,...curveScores1].length ?
+    Math.round([...lineScores1,...curveScores1].reduce((a,b)=>a+(b.shake||0),0) / [...lineScores1,...curveScores1].length) : 999;
+  const shake2avg = [...lineScores2,...curveScores2].length ?
+    Math.round([...lineScores2,...curveScores2].reduce((a,b)=>a+(b.shake||0),0) / [...lineScores2,...curveScores2].length) : 999;
+  const shakeTip = shake1avg <= shake2avg
+    ? '手首を固定して指先のスナップで引こう。'
+    : '指先も手首も固定して腕全体で引こう。';
+
+  // 各軸のアドバイス（説明なし、一言だけ）
+  const axisTips=['速く一気に引く意識を持とう。', shakeTip, '始点と終点を意識して引こう。'];
+
+  let weakHtml = '';
+
+  // 最も苦手な問題を先出し
+  const allWeak=[...G.allScores].sort((a,b)=>a.accuracy-b.accuracy)[0];
+  if(allWeak&&allWeak.accuracy<80) weakHtml+=`「<b>${weaknessText(allWeak)}</b>」が特に苦手（${allWeak.accuracy}点）。<br>`;
+
+  // 軸のアドバイス
+  weakHtml += axisTips[minAxis] + '<br>';
+
+  // 追加減点アドバイス（該当する場合のみ）
+  if(count>0){
+    const ao=Math.round(totalOvershoot/count), ae=Math.round(totalEndpoint/count), ah=Math.round(totalHook/count);
+    if(ah>=8)  weakHtml+=`線の終わりでフックが出ている。最後まで一定方向に引き切ろう。<br>`;
+    else if(ao>=8) weakHtml+=`ガイドからはみ出ることが多い。お手本のルートを確認しよう。<br>`;
+    else if(ae>=5) weakHtml+=`入り抜きの位置を意識しよう。<br>`;
+  }
+
+  if(avgAcc>=80) weakHtml+=`全体的に高水準！`;
+  else if(avgAcc>=65) weakHtml+=`精度をさらに安定させよう。`;
+  else weakHtml+=`まず直線を65点以上で安定させることから始めよう。`;
+
+  document.getElementById('r-body').innerHTML =
+    `<div class="weakness-box"><div class="weakness-hd">⚠ 弱点アドバイス</div><div class="weakness-body">${weakHtml}</div></div>`;
+
+  document.getElementById('r-stats').innerHTML=`
+    <div class="r-stat"><div class="r-stat-val">${total}</div><div class="r-stat-lbl">問 捌いた</div></div>
+    <div class="r-stat"><div class="r-stat-val">${G.maxCombo}</div><div class="r-stat-lbl">最大コンボ</div></div>
+    <div class="r-stat"><div class="r-stat-val">${G.setIndex}</div><div class="r-stat-lbl">完走セット</div></div>
+  `;
+
+  try{
+    const h=JSON.parse(localStorage.getItem('lf5')||'[]');
+    h.unshift({date:new Date().toLocaleDateString('ja-JP'),score:G.score,rank:rank.name,sets:G.setIndex,avgAcc,maxCombo:G.maxCombo});
+    if(h.length>30)h.pop();
+    localStorage.setItem('lf5',JSON.stringify(h));
+  }catch(e){}
+
+  // デバッグシート（debugModeがONのときだけ表示）
+  renderDebugSheet();
+}
+
+function renderDebugSheet() {
+  const sheet = document.getElementById('debug-sheet');
+  const tiles  = document.getElementById('debug-tiles');
+  if (!debugMode || debugFrames.length === 0) {
+    sheet.style.display = 'none';
+    return;
+  }
+  sheet.style.display = 'block';
+  tiles.innerHTML = '';
+  debugFrames.forEach(f => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'border-radius:6px;overflow:hidden;background:#12122a;';
+    const img = document.createElement('img');
+    img.src = f.dataURL;
+    img.style.cssText = 'width:100%;display:block;';
+    img.setAttribute('loading', 'lazy');
+    wrap.appendChild(img);
+    tiles.appendChild(wrap);
+  });
+}
+
+window.addEventListener('resize',()=>{
+  if(document.getElementById('s-game').classList.contains('active')){
+    resizeCanvas();
+    if(G.currentQ) G.currentQ=GENERATORS[G.phaseIndex](canvas.width,canvas.height);
+    render();
+  }
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+</html>
