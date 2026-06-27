@@ -199,7 +199,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.0</div>
+    <div class="t-ver">MPK Ver 0.9.1</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -835,6 +835,15 @@ function judge() {
   if (outsideRatio > 0.3) {
     G.timeLeft = Math.max(0, G.timeLeft - 2000);
     showToast('-2sec');
+    updateTimeUI();
+  }
+
+  // ブレが大きい場合は時間ペナルティ（-1秒）
+  // 速度で回数を稼ぐループを抑え、一定速度の先はブレ安定へ向かわせる狙い。
+  // はみ出し(-2秒)と独立して発火するため、両方該当する線は合計-3秒になる。
+  if (shake < 80) {
+    G.timeLeft = Math.max(0, G.timeLeft - 1000);
+    showToast('-1sec');
     updateTimeUI();
   }
 
