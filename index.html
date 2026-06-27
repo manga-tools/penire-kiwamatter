@@ -199,7 +199,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.14</div>
+    <div class="t-ver">MPK Ver 0.9.15</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -1668,7 +1668,8 @@ function showResult(){
     else if(ae>=5) weakHtml+=`入り抜きの位置を意識しよう。<br>`;
   }
 
-  if(avgAcc>=80) weakHtml+=`全体的に高水準！すごい！`;
+  if(avgSpeed < 50 && avgAcc >= 80) weakHtml+=`脱稿までの速度、大幅向上できるかも！`;
+  else if(avgAcc>=80) weakHtml+=`全体的に高水準！すごい！`;
   else if(avgAcc>=65) weakHtml+=`もう一度チャレンジ！繰り返すと上達します！`;
   else weakHtml+=`明日もチャレンジ！続けると見違えるよ！`;
 
