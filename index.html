@@ -199,7 +199,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.1</div>
+    <div class="t-ver">MPK Ver 0.9.11</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -831,19 +831,17 @@ function judge() {
   G.shakeList.push(shake);
   G.precisionList.push(precision);
 
-  // はみ出しが大きい場合は時間ペナルティ（-2秒）
-  if (outsideRatio > 0.3) {
-    G.timeLeft = Math.max(0, G.timeLeft - 2000);
-    showToast('-2sec');
-    updateTimeUI();
-  }
-
-  // ブレが大きい場合は時間ペナルティ（-1秒）
-  // 速度で回数を稼ぐループを抑え、一定速度の先はブレ安定へ向かわせる狙い。
-  // はみ出し(-2秒)と独立して発火するため、両方該当する線は合計-3秒になる。
-  if (shake < 80) {
-    G.timeLeft = Math.max(0, G.timeLeft - 1000);
-    showToast('-1sec');
+  // 時間ペナルティ（合算）：はみ出し-2秒 / ブレ-1秒 / 精度-1秒
+  // 雑な線は複数該当しやすく（ブレた線は精度も低くはみ出しがち）、全部重なると最大-4秒。
+  // 狙い：速度で回数を稼ぐループを抑え、一定速度の先は「ブレ安定・精度」へ向かわせる。
+  // トーストは合算して1つだけ出す（-1sec/-2secが複数飛んで重なるのを防ぐ）。
+  let penaltySec = 0;
+  if (outsideRatio > 0.3) penaltySec += 2; // ガイド帯はみ出し
+  if (shake < 80)         penaltySec += 1; // ブレ
+  if (precision < 80)     penaltySec += 1; // 精度
+  if (penaltySec > 0) {
+    G.timeLeft = Math.max(0, G.timeLeft - penaltySec * 1000);
+    showToast('-' + penaltySec + 'sec');
     updateTimeUI();
   }
 
