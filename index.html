@@ -203,7 +203,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.20</div>
+    <div class="t-ver">MPK Ver 0.9.21</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -1668,10 +1668,18 @@ function showResult(){
   function worstTypeTip(bin) {
     if (!bin) return '';
     const t = bin.repType;
+    // 直線は左右表現なし
     if (t === '直線②') return '水平に近い直線は、指先も手首も固定して腕全体で引こう。';
-    if (t === '曲線②') return '右に膨らむ曲線は、指先も手首も固定して腕全体で引こう。';
     if (t === '直線①') return '角度のある直線は、手首を固定して指先のスナップで引こう。';
-    if (t === '曲線①') return '左に膨らむ曲線は、手首を固定して指先のスナップで引こう。';
+    // 曲線：引き方はrepType固定（②=腕全体／①=指先スナップ）。主語の膨らみ左右は表示と揃えて左利きで反転。
+    if (t === '曲線②') {
+      const word = bulgeWord('右膨らみ') === '右膨らみ' ? '右に膨らむ' : '左に膨らむ';
+      return `${word}曲線は、指先も手首も固定して腕全体で引こう。`;
+    }
+    if (t === '曲線①') {
+      const word = bulgeWord('左膨らみ') === '左膨らみ' ? '左に膨らむ' : '右に膨らむ';
+      return `${word}曲線は、手首を固定して指先のスナップで引こう。`;
+    }
     return '';
   }
 
@@ -1702,7 +1710,7 @@ function showResult(){
   const lineWorst  = trendAnalysis(lineAll,  lineBins).worst;
   const curveWorst = trendAnalysis(curveAll, curveBins).worst;
   const worstCand = [lineWorst, curveWorst].filter(Boolean).sort((a,b)=>a.avg-b.avg)[0];
-  if (worstCand && worstCand.avg < 80) {
+  if (worstCand) {
     const tip = avgSpeed < 60
       ? 'まずは速度を上げよう。速度を上げると逆に線も安定します。'
       : worstTypeTip(worstCand);
