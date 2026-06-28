@@ -1624,10 +1624,10 @@ function showResult(){
   function worstTypeTip(bin) {
     if (!bin) return '';
     const t = bin.repType;
-    if (t === '直線②') return '指先も手首も固定して腕全体で引こう。'; // 水平に近い直線
-    if (t === '曲線②') return '指先も手首も固定して腕全体で引こう。'; // 右膨らみ曲線
-    if (t === '直線①') return '手首を固定して指先のスナップで引こう。'; // 角度のある直線
-    if (t === '曲線①') return '手首を固定して指先のスナップで引こう。'; // 左膨らみ曲線
+    if (t === '直線②') return '水平に近い直線は、指先も手首も固定して腕全体で引こう。';
+    if (t === '曲線②') return '右に膨らむ曲線は、指先も手首も固定して腕全体で引こう。';
+    if (t === '直線①') return '角度のある直線は、手首を固定して指先のスナップで引こう。';
+    if (t === '曲線①') return '左に膨らむ曲線は、手首を固定して指先のスナップで引こう。';
     return '';
   }
 
@@ -1662,7 +1662,7 @@ function showResult(){
     const tip = avgSpeed < 60
       ? 'まずは速度を上げよう。速度を上げると逆に線も安定します。'
       : worstTypeTip(worstCand);
-    weakHtml += `特に苦手なのは「<b>${weaknessTextBin(worstCand)}</b>」<br>→${tip}<br><br>`;
+    weakHtml += `特に苦手なのは「<b>${weaknessTextBin(worstCand)}</b>」<br>${tip}<div style="height:8px"></div>`;
   }
 
   // ② 次の目標 + 軸褒め + もう一度
