@@ -300,9 +300,9 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 
 <div id="s-ad" class="screen">
   <div class="ad-inner">
-    <a href="https://amzn.to/4gNiamu" target="_blank" rel="noopener"><img class="ad-cover" src="./cover.jpg" alt="マンガで楽しいマンガの描き方"></a>
+    <a id="ad-cover-link" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener"><img id="ad-cover-img" class="ad-cover" src="./cover.jpg" alt="マンガで楽しいマンガの描き方"></a>
     <div class="ad-catch" id="ad-catch-text"></div>
-    <a class="btn-amazon" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener">Amazonで見る</a>
+    <a id="ad-amazon-link" class="btn-amazon" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener">Amazonで見る</a>
     <button class="btn-continue" onclick="startGame()">続けて極まる</button>
   </div>
 </div>
@@ -1458,20 +1458,46 @@ async function shareResult(){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
-const AD_CATCHES = [
-  '驚きのAmazonレビュー ★4.8！',
-  'そろそろ休む？読む？',
-  '新感覚 マンガ技術体感マンガ',
-  '受賞・デビューができない人へ',
-  '読者に「届く」マンガになる',
+const BOOKS = [
+  {
+    img: './cover.jpg',
+    link: 'https://amzn.to/4gNiamu',
+    alt: 'マンガで楽しいマンガの描き方',
+    catches: [
+      '驚きのAmazonレビュー ★4.8！',
+      'そろそろ休む？読む？',
+      '新感覚 マンガ技術体感マンガ',
+      '受賞・デビューができない人へ',
+      '読者に「届く」マンガになる',
+    ]
+  },
+  {
+    img: './cover2.jpg',
+    link: 'https://amzn.to/3R7q2VC',
+    alt: 'マンガのマンガ',
+    catches: [
+      '新感覚！マンガ技術体感マンガ、今だけ全話無料！',
+      '今だけ全話「無料」ダウンロードできます〜！',
+      'ペン入れに疲れたら…楽しく学ぼう！全話無料！',
+      'SNSで話題のマンガ技術体感マンガ！無料だよ。',
+      '書籍もあるけど、実は今だけ全話無料で読めます！',
+    ]
+  },
 ];
 
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   if(id==='s-ad'){
-    const el=document.getElementById('ad-catch-text');
-    if(el) el.textContent=AD_CATCHES[Math.floor(Math.random()*AD_CATCHES.length)];
+    const book = BOOKS[Math.floor(Math.random() * BOOKS.length)];
+    const catchEl  = document.getElementById('ad-catch-text');
+    const coverLnk = document.getElementById('ad-cover-link');
+    const coverImg = document.getElementById('ad-cover-img');
+    const amazonLnk= document.getElementById('ad-amazon-link');
+    if(catchEl)   catchEl.textContent = book.catches[Math.floor(Math.random() * book.catches.length)];
+    if(coverLnk)  coverLnk.href = book.link;
+    if(coverImg){ coverImg.src = book.img; coverImg.alt = book.alt; }
+    if(amazonLnk) amazonLnk.href = book.link;
   }
 }
 
