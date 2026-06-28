@@ -199,7 +199,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.18</div>
+    <div class="t-ver">MPK Ver 0.9.19</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -1619,63 +1619,71 @@ function showResult(){
     strCard('直線', lineAll, lineBins) +
     strCard('曲線', curveAll, curveBins);
 
-  // 弱点分析
-  let totalOvershoot=0, totalEndpoint=0, totalHook=0, count=0;
-  G.allScores.forEach(s=>{
-    if(s.deductions){
-      totalOvershoot += s.deductions.overshoot||0;
-      totalEndpoint  += s.deductions.endpoint||0;
-      totalHook      += s.deductions.hook||0;
-      count++;
-    }
-  });
-  const threeVals=[avgSpeed,avgShake,avgPrecision];
-  const minAxis = threeVals.indexOf(Math.min(...threeVals));
 
-  // ブレが低い場合、①系か②系かでアドバイスを変える
-  const shake1avg = [...lineScores1,...curveScores1].length ?
-    Math.round([...lineScores1,...curveScores1].reduce((a,b)=>a+(b.shake||0),0) / [...lineScores1,...curveScores1].length) : 999;
-  const shake2avg = [...lineScores2,...curveScores2].length ?
-    Math.round([...lineScores2,...curveScores2].reduce((a,b)=>a+(b.shake||0),0) / [...lineScores2,...curveScores2].length) : 999;
-  const shakeTip = shake1avg <= shake2avg
-    ? '手首を固定して指先のスナップで引こう。'
-    : '指先も手首も固定して腕全体で引こう。';
+  // 苦手区間のタイプ→アドバイス文
+  function worstTypeTip(bin) {
+    if (!bin) return '';
+    const t = bin.repType;
+    if (t === '直線②') return '指先も手首も固定して腕全体で引こう。'; // 水平に近い直線
+    if (t === '曲線②') return '指先も手首も固定して腕全体で引こう。'; // 右膨らみ曲線
+    if (t === '直線①') return '手首を固定して指先のスナップで引こう。'; // 角度のある直線
+    if (t === '曲線①') return '手首を固定して指先のスナップで引こう。'; // 左膨らみ曲線
+    return '';
+  }
 
-  // 各軸のアドバイス（説明なし、一言だけ）
-  const axisTips=['もっと速く、スッと一気に引く意識を持とう。', shakeTip, '始点と終点を意識して引こう。'];
+  // 次の目標称号テーブル
+  const TITLES = [
+    { min:     0, next:  4000, label: '中級者レベル' },
+    { min:  4000, next:  6000, label: '商業レベル' },
+    { min:  6000, next:  8000, label: 'プロマンガ家レベル' },
+    { min:  8000, next: 10000, label: '連載マンガ家レベル' },
+    { min: 10000, next: 12000, label: '達人級レベル' },
+    { min: 12000, next: 14000, label: '超一流レベル' },
+    { min: 14000, next: 16000, label: '伝説級レベル' },
+    { min: 16000, next: 18000, label: '神マンガ家レベル' },
+    { min: 18000, next: 20000, label: '日本最高峰レベル' },
+    { min: 20000, next: 22000, label: '感謝の領域レベル' },
+    { min: 22000, next: null,  label: '感謝の領域レベル' },
+  ];
+  function getNextTitle(score) {
+    let current = TITLES[0];
+    for (const t of TITLES) { if (score >= t.min) current = t; }
+    if (current.next === null) return { reached: true, label: current.label };
+    return { reached: false, label: current.label, diff: current.next - score };
+  }
 
   let weakHtml = '';
 
-  // 最も苦手な問題を先出し
-  // 「特に苦手」も結果画面の苦手▲と同じ trendAnalysis（3本以上の区間のみ＝外れ値除外）を使う。
-  // 直線・曲線それぞれの最苦手区間のうち平均が低い方を採用し、点数も区間平均で揃える。
+  // ① 特に苦手な問題 + アドバイス（苦手区間ある場合のみ）
   const lineWorst  = trendAnalysis(lineAll,  lineBins).worst;
   const curveWorst = trendAnalysis(curveAll, curveBins).worst;
   const worstCand = [lineWorst, curveWorst].filter(Boolean).sort((a,b)=>a.avg-b.avg)[0];
-  if(worstCand && worstCand.avg < 80) weakHtml+=`「<b>${weaknessTextBin(worstCand)}</b>」が特に苦手（${worstCand.avg}点）。<br>`;
+  if (worstCand && worstCand.avg < 80) {
+    const tip = avgSpeed < 60
+      ? 'まずは速度を上げよう。速度を上げると逆に線も安定します。'
+      : worstTypeTip(worstCand);
+    weakHtml += `特に苦手なのは「<b>${weaknessTextBin(worstCand)}</b>」<br>→${tip}<br><br>`;
+  }
 
-  // 3軸すべて90超えの場合は軸アドバイスをスキップして称賛
-  const allAxesExcellent = avgSpeed>=90 && avgShake>=90 && avgPrecision>=90;
-  if (allAxesExcellent) {
-    weakHtml += 'ちょっとすごすぎる…<br>';
+  // ② 次の目標 + 軸褒め + もう一度
+  const titleInfo = getNextTitle(G.score);
+  const scoreComment = titleInfo.reached
+    ? `<b>${titleInfo.label}</b>到達！`
+    : `がんばってます！あと${titleInfo.diff.toLocaleString()}点で<b>${titleInfo.label}</b>！`;
+
+  const maxAxisVal = Math.max(avgSpeed, avgShake, avgPrecision);
+  const axisRange  = maxAxisVal - Math.min(avgSpeed, avgShake, avgPrecision);
+  const axisNames  = ['速度', 'ブレ', '精度'];
+  const maxAxisIdx = [avgSpeed, avgShake, avgPrecision].indexOf(maxAxisVal);
+  let axisComment;
+  if (axisRange <= 10) {
+    axisComment = maxAxisVal >= 80 ? 'バランスよく高いのがすごいです！' : 'バランスよく高いのがいい感じ！';
   } else {
-    // 軸のアドバイス
-    weakHtml += axisTips[minAxis] + '<br>';
+    const axisLabel = axisNames[maxAxisIdx];
+    axisComment = maxAxisVal >= 80 ? `とくに「${axisLabel}」が高いのがすごいです！` : `とくに「${axisLabel}」が高いのがいい感じ！`;
   }
 
-  // 追加減点アドバイス（該当する場合のみ）
-  if(count>0){
-    const ao=Math.round(totalOvershoot/count), ae=Math.round(totalEndpoint/count), ah=Math.round(totalHook/count);
-    if(ah>=8)  weakHtml+=`線の終わりでフックが出ている。最後まで一定方向に引き切ろう。<br>`;
-    else if(ao>=8) weakHtml+=`ガイドからはみ出ることが多い。お手本のルートを確認しよう。<br>`;
-    else if(ae>=5) weakHtml+=`入り抜きの位置を意識しよう。<br>`;
-  }
-
-  const minAxisVal = Math.min(avgSpeed, avgShake, avgPrecision);
-  if(avgSpeed < 50 && avgAcc >= 80) weakHtml+=`脱稿までの速度、大幅向上できるかも！`;
-  else if(minAxisVal >= 80) weakHtml+=`全体的に高水準！すごい！`;
-  else if(minAxisVal >= 65) weakHtml+=`もう一度チャレンジ！繰り返すと上達します！`;
-  else weakHtml+=`明日もチャレンジ！続けると見違えるよ！`;
+  weakHtml += `${scoreComment}<br>${axisComment}もう一度挑戦しよう！`;
 
   document.getElementById('r-body').innerHTML =
     `<div class="weakness-box"><div class="weakness-hd">⚠ 弱点アドバイス</div><div class="weakness-body">${weakHtml}</div></div>`;
