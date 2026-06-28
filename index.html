@@ -1706,7 +1706,7 @@ function showResult(){
 
   let weakHtml = '';
 
-  // ① 特に苦手な問題 + アドバイス（苦手区間ある場合のみ）
+  // ① とくに苦手な問題 + アドバイス（苦手区間ある場合のみ）
   const lineWorst  = trendAnalysis(lineAll,  lineBins).worst;
   const curveWorst = trendAnalysis(curveAll, curveBins).worst;
   const worstCand = [lineWorst, curveWorst].filter(Boolean).sort((a,b)=>a.avg-b.avg)[0];
@@ -1714,7 +1714,7 @@ function showResult(){
     const tip = avgSpeed < 60
       ? 'まずは速度を上げよう。速度を上げると逆に線も安定します。'
       : worstTypeTip(worstCand);
-    weakHtml += `特に苦手なのは「<b>${weaknessTextBin(worstCand)}</b>」<br>${tip}<div style="height:8px"></div>`;
+    weakHtml += `とくに苦手なのは「<b>${weaknessTextBin(worstCand)}</b>」<br>${tip}<div style="height:8px"></div>`;
   }
 
   // ② 次の目標 + 軸褒め + もう一度
