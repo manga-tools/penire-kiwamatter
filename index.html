@@ -27,7 +27,7 @@
   --green:#27ae60;--orange:#e67e22;--mist:#b0bec5;--white:#fdfcfa;
   --cyan:#00d4ff;
 }
-body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow:hidden}
+body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-serif;min-height:100vh;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .screen{display:none;min-height:100vh;flex-direction:column}
 .screen.active{display:flex}
 
@@ -203,7 +203,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.21</div>
+    <div class="t-ver">MPK Ver 0.9.23</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -871,7 +871,10 @@ function judge() {
   // 倍率の閾値も 90→85 / 80→75 / 70→65 / 55→50 と5点下げ、採点厳格化（PRECが約5点辛く
   // なった分）に報酬を合わせる。これで「同じ線質なら前と同じ点数」＝総得点の基準を維持。
   const multi = accuracy>=85?1.5:accuracy>=75?1.2:accuracy>=65?1.0:accuracy>=50?.6:.2;
-  const earned = Math.round(q.basePt * multi);
+  // 速度係数（減点のみ・上限1.0）：speed80で標準、それ未満は単価を削る。
+  // 狙い：速度で稼ぐループを抑えつつ「速くて丁寧」を上位に。速度では精度を逆転できない。
+  const spdMulti = speed>=80?1.00:speed>=65?0.92:speed>=50?0.85:0.80;
+  const earned = Math.round(q.basePt * multi * spdMulti);
 
   // 減点詳細を計算（弱点分析用）
   const { outsideRatio, avgExcess } = calcOvershoot(G.drawn, q.pts, q.tol);
