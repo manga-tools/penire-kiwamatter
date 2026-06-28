@@ -42,6 +42,10 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 .t-desc{max-width:400px;margin:0 auto 40px;font-size:13px;line-height:2.1;color:rgba(255,255,255,.45)}
 .btn-go{display:inline-block;background:var(--red);color:#fff;font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:17px;letter-spacing:4px;padding:17px 52px;border:none;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:background .15s}
 .btn-go:hover{background:var(--red2)}
+.t-hand-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.btn-go.alt{background:var(--ink2);border:1px solid rgba(255,255,255,.25)}
+.btn-go.alt:hover{background:#222}
+.t-hand-note{font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.3);margin-top:14px}
 .t-flow{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:44px;flex-wrap:wrap}
 .t-flow-item{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:10px 16px;font-size:11px;color:rgba(255,255,255,.5);text-align:center;line-height:1.6}
 .t-flow-item strong{display:block;font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--white);margin-bottom:2px}
@@ -199,12 +203,16 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.19</div>
+    <div class="t-ver">MPK Ver 0.9.20</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
     </div>
-    <button class="btn-go" onclick="startGame()">極まる</button>
+    <div class="t-hand-row">
+      <button class="btn-go" onclick="startGame('right')">極まる（右利き）</button>
+      <button class="btn-go alt" onclick="startGame('left')">極まる（左利き）</button>
+    </div>
+    <div class="t-hand-note">利き手を選んでスタート。左利きはお手本の向きが左右反転します</div>
     <div class="t-flow">
       <div class="t-flow-item straight"><strong>直線①</strong>×5問</div>
       <div class="t-flow-arrow">→</div>
@@ -503,6 +511,36 @@ function genCurvePhase3(W, H) {
 const GENERATORS = [genLinePhase0, genLinePhase1, genCurvePhase2, genCurvePhase3];
 
 // ============================================================
+// 利き手モード（左利きはお手本を左右反転）
+// ============================================================
+// startGame() で initState() がGを作り直すため、利き手は別変数で保持する。
+// これで「続けて極まる」でも選んだ利き手が引き継がれる。
+let currentHand = 'right'; // 'right' | 'left'
+
+// 出題オブジェクトを左右反転する。
+// ・pts を x→W-x で鏡映 → お手本の見た目・採点が自動連動して反転
+// ・group の方向語（右↔左、膨らみ）を反転 → 表示ラベル用
+// ・mirrored フラグを立てる → 矢印/苦手文の時計方向反転に使用
+// ・type/angleDeg/sagPct の数値はいじらない（採点分岐と傾き形容を保護）
+function flipDirText(text) {
+  if (!text) return text;
+  // 一時トークンを使って右↔左を同時入れ替え（二度置換の打ち消しを防ぐ）
+  return text
+    .replace(/右/g, '\u0001').replace(/左/g, '右').replace(/\u0001/g, '左');
+}
+function mirrorQuestion(q, W) {
+  q.pts = q.pts.map(p => ({ x: W - p.x, y: p.y }));
+  q.group = flipDirText(q.group);
+  q.mirrored = true;
+  return q;
+}
+// 膨らみの左右語：左利き時は反転して返す（angleDeg/type自体は不変なので表示側で補正）
+function bulgeWord(base) {
+  if (currentHand === 'left') return base === '左膨らみ' ? '右膨らみ' : '左膨らみ';
+  return base;
+}
+
+// ============================================================
 // 日本語ラベル変換
 // ============================================================
 
@@ -552,10 +590,10 @@ function weaknessText(s) {
     return `${degToDir1(s.angleDeg)}（${lenLabel}）の直線`;
   }
   if (s.type === '曲線①') {
-    return `${degToDir2(s.angleDeg)}・左膨らみ・${sagToLabel(s.sagPct)}（${lenLabel}）の曲線`;
+    return `${degToDir2(s.angleDeg)}・${bulgeWord('左膨らみ')}・${sagToLabel(s.sagPct)}（${lenLabel}）の曲線`;
   }
   if (s.type === '曲線②') {
-    return `${degToDir3(s.angleDeg)}・右膨らみ・${sagToLabel(s.sagPct)}（${lenLabel}）の曲線`;
+    return `${degToDir3(s.angleDeg)}・${bulgeWord('右膨らみ')}・${sagToLabel(s.sagPct)}（${lenLabel}）の曲線`;
   }
   return s.label;
 }
@@ -572,11 +610,13 @@ function clockMinute(deg) {
 // 苦手区間(trendAnalysisのbin)→時計表現の文言。例「5時方向に引く左膨らみの曲線」。
 // 個別1本ではなく外れ値除外済みの区間代表を使うので、center角度とrepTypeから組み立てる。
 function weaknessTextBin(bin) {
-  const m = clockMinute(bin.center);
+  let m = clockMinute(bin.center);
+  // 左利き：時計面を左右反転（3時↔9時、12/6時は不動）。m→(60-m)%60
+  if (currentHand === 'left') m = (60 - m) % 60;
   // 0・15・30・45分はキリのいい時計方向に言い換え、それ以外は「○分方向」
   const clockMap = { 0:'時計の12時方向', 15:'時計の3時方向', 30:'時計の6時方向', 45:'時計の9時方向' };
   const dir = clockMap[m] || `時計の${m}分方向`;
-  const bulge = bin.repType === '曲線①' ? '左膨らみ' : bin.repType === '曲線②' ? '右膨らみ' : '';
+  const bulge = bin.repType === '曲線①' ? bulgeWord('左膨らみ') : bin.repType === '曲線②' ? bulgeWord('右膨らみ') : '';
   const kind = (bin.repType === '直線①' || bin.repType === '直線②') ? '直線' : '曲線';
   return bulge ? `${dir}に引く${bulge}の${kind}` : `${dir}に引く${kind}`;
 }
@@ -1435,8 +1475,9 @@ function showScreen(id){
   }
 }
 
-function startGame(){
-  gtag('event', 'game_start', { event_category: 'game' });
+function startGame(hand){
+  if(hand==='right'||hand==='left') currentHand=hand; // タイトルからは明示指定。続行ボタンは引数なし→維持
+  gtag('event', 'game_start', { event_category: 'game', hand: currentHand });
   initState();
   debugCount = 0;
   debugFrames = [];
@@ -1461,6 +1502,7 @@ function loadQ() {
   G.drawn=[]; G.drawing=false; G.judged=false;
 
   G.currentQ = GENERATORS[G.phaseIndex](canvas.width, canvas.height);
+  if (currentHand === 'left') mirrorQuestion(G.currentQ, canvas.width);
 
   const phase = PHASES[G.phaseIndex];
   const phaseEl=document.getElementById('hud-phase');
@@ -1550,12 +1592,14 @@ function showResult(){
     const deg = s.angleDeg;
     const type = s.type;
     const w=30, h=30, cx=15, cy=15, len=11;
+    // 左利き：矢印グリフ全体を水平反転（お手本pts反転と同じ x→W-x）
+    const flip = currentHand==='left' ? 'transform:scaleX(-1);' : '';
     const rad = deg * Math.PI / 180;
     const x1=cx+Math.cos(rad)*len, y1=cy-Math.sin(rad)*len;
     const x2=cx-Math.cos(rad)*len, y2=cy+Math.sin(rad)*len;
     const mid = `ma${deg}${type}${color.replace(/[^a-zA-Z0-9]/g,'')}`;
     if (type==='直線①'||type==='直線②') {
-      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="flex-shrink:0">
+      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="flex-shrink:0;${flip}">
         <defs><marker id="${mid}" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="${color}"/></marker></defs>
         <line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${color}" stroke-width="1.8" stroke-linecap="round" marker-end="url(#${mid})"/>
         <circle cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="2" fill="${color}"/>
@@ -1566,7 +1610,7 @@ function showResult(){
       const sign = type==='曲線①' ? 1 : -1;
       const cpx = cx - sign*Math.sin(rad)*len*0.8;
       const cpy = cy - sign*Math.cos(rad)*len*0.8;
-      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="flex-shrink:0">
+      return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="flex-shrink:0;${flip}">
         <defs><marker id="${mid}" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="${color}"/></marker></defs>
         <path d="M${x1.toFixed(1)},${y1.toFixed(1)} Q${cpx.toFixed(1)},${cpy.toFixed(1)} ${x2.toFixed(1)},${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round" marker-end="url(#${mid})"/>
         <circle cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="2" fill="${color}"/>
@@ -1733,7 +1777,7 @@ function renderDebugSheet() {
 window.addEventListener('resize',()=>{
   if(document.getElementById('s-game').classList.contains('active')){
     resizeCanvas();
-    if(G.currentQ) G.currentQ=GENERATORS[G.phaseIndex](canvas.width,canvas.height);
+    if(G.currentQ){G.currentQ=GENERATORS[G.phaseIndex](canvas.width,canvas.height);if(currentHand==='left')mirrorQuestion(G.currentQ,canvas.width);}
     render();
   }
 });
