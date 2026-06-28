@@ -1680,7 +1680,11 @@ function showResult(){
     axisComment = maxAxisVal >= 80 ? 'バランスよく高いのがすごいです！' : 'バランスよく高いのがいい感じ！';
   } else {
     const axisLabel = axisNames[maxAxisIdx];
-    axisComment = maxAxisVal >= 80 ? `とくに「${axisLabel}」が高いのがすごいです！` : `とくに「${axisLabel}」が高いのがいい感じ！`;
+    if (axisLabel === 'ブレ') {
+      axisComment = maxAxisVal >= 80 ? 'とくに「ブレの少なさ」がすごいです！' : 'とくに「ブレの少なさ」がいい感じ！';
+    } else {
+      axisComment = maxAxisVal >= 80 ? `とくに「${axisLabel}」が高いのがすごいです！` : `とくに「${axisLabel}」が高いのがいい感じ！`;
+    }
   }
 
   weakHtml += `${scoreComment}<br>${axisComment}もう一度挑戦しよう！`;
