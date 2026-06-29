@@ -136,11 +136,17 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 /* ── RESULT ── */
 #s-result{align-items:center;justify-content:flex-start;background:var(--ink);overflow-y:auto;height:100vh;-webkit-overflow-scrolling:touch}
 #s-ad{align-items:center;justify-content:center;background:var(--ink)}
-.ad-inner{text-align:center;width:100%;max-width:560px;padding:32px 24px}
-.ad-cover{width:auto;height:55vh;max-width:100%;object-fit:contain;display:block;margin:0 auto 22px;border-radius:4px}
-.ad-catch{font-size:13px;color:#fdfcfa;margin-bottom:20px;line-height:1.8;letter-spacing:1px}
+.ad-inner{text-align:center;width:100%;max-width:560px;padding:20px 0 24px}
+.ad-carousel-wrap{position:relative;width:100%;overflow:hidden;touch-action:pan-y}
+.ad-carousel-track{display:flex;transition:transform 0.3s ease;will-change:transform}
+.ad-carousel-slide{min-width:100%;display:flex;align-items:center;justify-content:center;padding:0 12px;box-sizing:border-box}
+.ad-carousel-slide img{width:auto;max-width:100%;height:72vh;object-fit:contain;display:block;border-radius:4px}
+.ad-slide-hint{font-size:12px;color:#fff;letter-spacing:3px;margin:10px 0 16px;text-align:center;padding-left:0}
+.ad-carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;user-select:none;-webkit-user-select:none}
+.ad-carousel-arrow.left{left:4px;width:44px;height:44px;font-size:26px;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.6);color:#fff}
+.ad-carousel-arrow.right{right:4px}
 .btn-amazon{display:inline-block;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-weight:700;font-size:11px;letter-spacing:2px;padding:9px 20px;border:1px solid rgba(255,255,255,.12);cursor:pointer;border-radius:3px;margin-bottom:16px;text-decoration:none}
-.btn-continue{display:block;background:var(--red);color:#fff;font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:15px;letter-spacing:4px;padding:15px 20px;border:none;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);width:100%;transition:background .15s}
+.btn-continue{display:block;background:var(--red);color:#fff;font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:15px;letter-spacing:4px;padding:15px 20px;border:none;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);width:100%;transition:background .15s;margin:0 24px;width:calc(100% - 48px);box-sizing:border-box}
 .btn-continue:hover{background:var(--red2)}
 .result-wrap{max-width:500px;width:100%;padding:24px 18px 40px;text-align:center;margin:0 auto}
 .r-game-title{font-size:10px;letter-spacing:5px;color:rgba(255,255,255,.55);margin-bottom:16px;font-weight:700}
@@ -203,7 +209,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.23</div>
+    <div class="t-ver">MPK Ver 0.9.24</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -300,9 +306,25 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 
 <div id="s-ad" class="screen">
   <div class="ad-inner">
-    <a id="ad-cover-link" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener"><img id="ad-cover-img" class="ad-cover" src="./cover.jpg" alt="マンガで楽しいマンガの描き方"></a>
-    <div class="ad-catch" id="ad-catch-text"></div>
-    <a id="ad-amazon-link" class="btn-amazon" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener">Amazonで見る</a>
+    <div class="ad-carousel-wrap" id="ad-carousel-wrap">
+      <div class="ad-carousel-track" id="ad-carousel-track">
+        <div class="ad-carousel-slide"><img src="./preview/page11.jpg" alt="中身11"></div>
+        <div class="ad-carousel-slide"><img src="./preview/page10.jpg" alt="中身10"></div>
+        <div class="ad-carousel-slide"><img src="./preview/page09.jpg" alt="中身9"></div>
+        <div class="ad-carousel-slide"><img src="./preview/page08.jpg" alt="中身8"></div>
+        <div class="ad-carousel-slide"><img src="./preview/page07.jpg" alt="中身7"></div>
+        <div class="ad-carousel-slide"><img src="./preview/page06.jpg" alt="中身6"></div>
+        <div class="ad-carousel-slide"><img src="./preview/page05.jpg" alt="中身5"></div>
+        <div class="ad-carousel-slide"><img src="./preview/page04.jpg" alt="中身4"></div>
+        <div class="ad-carousel-slide"><img src="./preview/page03.jpg" alt="中身3"></div>
+        <div class="ad-carousel-slide"><img src="./preview/page02.jpg" alt="中身2"></div>
+        <div class="ad-carousel-slide"><img src="./preview/page01.jpg" alt="中身1"></div>
+      </div>
+      <button class="ad-carousel-arrow left" id="ad-prev" aria-label="前へ">‹</button>
+      <button class="ad-carousel-arrow right" id="ad-next" aria-label="次へ">›</button>
+    </div>
+    <div class="ad-slide-hint">← スライドして読めます</div>
+    <a class="btn-amazon" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener">Amazonで見る</a>
     <button class="btn-continue" onclick="startGame()">続けて極まる</button>
   </div>
 </div>
@@ -1461,47 +1483,58 @@ async function shareResult(){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
-const BOOKS = [
-  {
-    img: './cover.jpg',
-    link: 'https://amzn.to/4gNiamu',
-    alt: 'マンガで楽しいマンガの描き方',
-    catches: [
-      '驚きのAmazonレビュー ★4.8！',
-      'そろそろ休む？読む？',
-      '新感覚 マンガ技術体感マンガ',
-      '受賞・デビューができない人へ',
-      '読者に「届く」マンガになる',
-    ]
-  },
-  {
-    img: './cover2.jpg',
-    link: 'https://amzn.to/3R7q2VC',
-    alt: 'マンガのマンガ',
-    catches: [
-      '新感覚！マンガ技術体感マンガ、今だけ全話無料！',
-      '今だけ全話「無料」ダウンロードできます〜！',
-      'ペン入れに疲れたら…楽しく学ぼう！全話無料！',
-      'SNSで話題のマンガ技術体感マンガ！無料だよ。',
-      '書籍もあるけど、実は今だけ全話無料で読めます！',
-    ]
-  },
-];
+// ── AD CAROUSEL ──
+let adCarouselIdx = 0;
+const AD_TOTAL = 11;
+let adCarouselBound = false;
+
+function adCarouselGoTo(n){
+  adCarouselIdx = Math.max(0, Math.min(AD_TOTAL - 1, n));
+  const track = document.getElementById('ad-carousel-track');
+  if(track) track.style.transform = `translateX(-${adCarouselIdx * 100}%)`;
+}
+
+function initAdCarousel(){
+  // 初期位置 = 右端（page01）。idxが小さいほどpage番号が大きい並び。
+  adCarouselIdx = AD_TOTAL - 1;
+  const track = document.getElementById('ad-carousel-track');
+  if(track) track.style.transition = 'none';
+  if(track) track.style.transform = `translateX(-${adCarouselIdx * 100}%)`;
+  // transitionを戻す（即時移動後にアニメ復活）
+  setTimeout(()=>{ if(track) track.style.transition = 'transform 0.3s ease'; }, 50);
+
+  if(adCarouselBound) return; // イベントは一度だけ登録
+
+  const prev = document.getElementById('ad-prev');
+  const next = document.getElementById('ad-next');
+  const wrap = document.getElementById('ad-carousel-wrap');
+
+  // 目立つ左矢印「‹」＝次ページ（page02方向）→ idxを減らす
+  if(prev) prev.onclick = ()=>adCarouselGoTo(adCarouselIdx - 1);
+  // 右矢印「›」＝前ページに戻る → idxを増やす
+  if(next) next.onclick = ()=>adCarouselGoTo(adCarouselIdx + 1);
+
+  // タッチ/ポインタースワイプ
+  if(wrap){
+    let startX = 0, dragging = false;
+    wrap.addEventListener('pointerdown', e=>{ startX = e.clientX; dragging = true; });
+    wrap.addEventListener('pointerup', e=>{
+      if(!dragging) return;
+      const dx = e.clientX - startX;
+      // 右スワイプ(dx>0)＝次ページ→idx減らす / 左スワイプ(dx<0)＝前ページ→idx増やす
+      if(Math.abs(dx) > 30) adCarouselGoTo(adCarouselIdx + (dx > 0 ? -1 : 1));
+      dragging = false;
+    });
+    wrap.addEventListener('pointercancel', ()=>{ dragging = false; });
+  }
+
+  adCarouselBound = true;
+}
 
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id==='s-ad'){
-    const book = BOOKS[Math.floor(Math.random() * BOOKS.length)];
-    const catchEl  = document.getElementById('ad-catch-text');
-    const coverLnk = document.getElementById('ad-cover-link');
-    const coverImg = document.getElementById('ad-cover-img');
-    const amazonLnk= document.getElementById('ad-amazon-link');
-    if(catchEl)   catchEl.textContent = book.catches[Math.floor(Math.random() * book.catches.length)];
-    if(coverLnk)  coverLnk.href = book.link;
-    if(coverImg){ coverImg.src = book.img; coverImg.alt = book.alt; }
-    if(amazonLnk) amazonLnk.href = book.link;
-  }
+  if(id==='s-ad') initAdCarousel();
 }
 
 function startGame(hand){
