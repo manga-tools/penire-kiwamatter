@@ -307,23 +307,11 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 <div id="s-ad" class="screen">
   <div class="ad-inner">
     <div class="ad-carousel-wrap" id="ad-carousel-wrap">
-      <div class="ad-carousel-track" id="ad-carousel-track">
-        <div class="ad-carousel-slide"><img src="./preview/page11.jpg" alt="中身11"></div>
-        <div class="ad-carousel-slide"><img src="./preview/page10.jpg" alt="中身10"></div>
-        <div class="ad-carousel-slide"><img src="./preview/page09.jpg" alt="中身9"></div>
-        <div class="ad-carousel-slide"><img src="./preview/page08.jpg" alt="中身8"></div>
-        <div class="ad-carousel-slide"><img src="./preview/page07.jpg" alt="中身7"></div>
-        <div class="ad-carousel-slide"><img src="./preview/page06.jpg" alt="中身6"></div>
-        <div class="ad-carousel-slide"><img src="./preview/page05.jpg" alt="中身5"></div>
-        <div class="ad-carousel-slide"><img src="./preview/page04.jpg" alt="中身4"></div>
-        <div class="ad-carousel-slide"><img src="./preview/page03.jpg" alt="中身3"></div>
-        <div class="ad-carousel-slide"><img src="./preview/page02.jpg" alt="中身2"></div>
-        <div class="ad-carousel-slide"><img src="./preview/page01.jpg" alt="中身1"></div>
-      </div>
+      <div class="ad-carousel-track" id="ad-carousel-track"></div>
       <button class="ad-carousel-arrow left" id="ad-prev" aria-label="前へ">‹</button>
       <button class="ad-carousel-arrow right" id="ad-next" aria-label="次へ">›</button>
     </div>
-    <div class="ad-slide-hint">← スライドして読めます</div>
+    <div class="ad-slide-hint">← スライドして読めます！息抜きに！</div>
     <a class="btn-amazon" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener">Amazonで見る</a>
     <button class="btn-continue" onclick="startGame()">続けて極まる</button>
   </div>
@@ -1484,19 +1472,42 @@ async function shareResult(){
 }
 
 // ── AD CAROUSEL ──
+// 表示するマンガ一覧（フォルダ名と枚数）。増やす場合はここに追加。
+const AD_MANGA = [
+  { folder: 'preview1', pages: 11 },
+  { folder: 'preview2', pages: 11 },
+];
+
 let adCarouselIdx = 0;
-const AD_TOTAL = 11;
+let adTotal = 0;      // 現在表示中マンガのページ数
 let adCarouselBound = false;
 
 function adCarouselGoTo(n){
-  adCarouselIdx = Math.max(0, Math.min(AD_TOTAL - 1, n));
+  adCarouselIdx = Math.max(0, Math.min(adTotal - 1, n));
   const track = document.getElementById('ad-carousel-track');
   if(track) track.style.transform = `translateX(-${adCarouselIdx * 100}%)`;
 }
 
+// 選んだマンガのスライドを生成（右端=page01、左へpage02...という並び）
+function buildAdSlides(manga){
+  const track = document.getElementById('ad-carousel-track');
+  if(!track) return;
+  let html = '';
+  for(let p = manga.pages; p >= 1; p--){
+    const num = String(p).padStart(2, '0');
+    html += `<div class="ad-carousel-slide"><img src="./${manga.folder}/page${num}.jpg" alt="中身${p}"></div>`;
+  }
+  track.innerHTML = html;
+  adTotal = manga.pages;
+}
+
 function initAdCarousel(){
+  // ランダムでマンガを1つ選んでスライド生成
+  const manga = AD_MANGA[Math.floor(Math.random() * AD_MANGA.length)];
+  buildAdSlides(manga);
+
   // 初期位置 = 右端（page01）。idxが小さいほどpage番号が大きい並び。
-  adCarouselIdx = AD_TOTAL - 1;
+  adCarouselIdx = adTotal - 1;
   const track = document.getElementById('ad-carousel-track');
   if(track) track.style.transition = 'none';
   if(track) track.style.transform = `translateX(-${adCarouselIdx * 100}%)`;
