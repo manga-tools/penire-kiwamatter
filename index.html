@@ -312,7 +312,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
       <button class="ad-carousel-arrow right" id="ad-next" aria-label="次へ">›</button>
     </div>
     <div class="ad-slide-hint">← スライドして読めます！息抜きに！</div>
-    <a class="btn-amazon" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener">Amazonで見る</a>
+    <a class="btn-amazon" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener" onclick="gtag('event','amazon_click',{event_category:'ad',manga_folder:adCurrentFolder,slide_page:adTotal-adCarouselIdx})">Amazonで見る</a>
     <button class="btn-continue" onclick="startGame()">続けて極まる</button>
   </div>
 </div>
@@ -1480,6 +1480,7 @@ const AD_MANGA = [
 
 let adCarouselIdx = 0;
 let adTotal = 0;      // 現在表示中マンガのページ数
+let adCurrentFolder = '';  // 現在表示中マンガのフォルダ名（GA4送信用）
 let adCarouselBound = false;
 
 function adCarouselGoTo(n){
@@ -1499,6 +1500,7 @@ function buildAdSlides(manga){
   }
   track.innerHTML = html;
   adTotal = manga.pages;
+  adCurrentFolder = manga.folder;
 }
 
 function initAdCarousel(){
