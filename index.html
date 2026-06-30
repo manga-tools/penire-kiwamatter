@@ -43,6 +43,11 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 .btn-go{display:inline-block;background:var(--red);color:#fff;font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:17px;letter-spacing:4px;padding:17px 52px;border:none;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:background .15s}
 .btn-go:hover{background:var(--red2)}
 .t-hand-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.t-hand-col{display:flex;flex-direction:column;gap:8px;align-items:stretch}
+.btn-practice2{background:var(--ink2);color:var(--gold2);font-family:'Noto Sans JP',sans-serif;font-weight:700;font-size:13px;letter-spacing:2px;padding:8px 20px;border:1px solid rgba(240,192,64,.4);cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:background .15s}
+.btn-practice2:hover{background:#2a2418}
+.btn-practice2.alt{color:rgba(255,255,255,.78);border-color:rgba(255,255,255,.28)}
+.btn-practice2.alt:hover{background:#222}
 .btn-go.alt{background:var(--ink2);border:1px solid rgba(255,255,255,.25)}
 .btn-go.alt:hover{background:#222}
 .t-hand-note{font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.3);margin-top:14px}
@@ -99,6 +104,27 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 .canvas-area{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;position:relative}
 #gc{background:var(--paper);display:block;touch-action:none;cursor:crosshair;box-shadow:0 0 0 1px rgba(0,0,0,.4),0 6px 32px rgba(0,0,0,.5)}
 .chint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.18);pointer-events:none;transition:opacity .3s}
+/* practice mode */
+.t-practice-row{margin-top:18px;text-align:center}
+.btn-practice{display:inline-block;background:var(--ink2);color:var(--gold2);font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:15px;letter-spacing:2px;padding:13px 30px;border:1px solid rgba(240,192,64,.45);border-radius:8px;cursor:pointer;transition:background .15s,border-color .15s}
+.btn-practice:hover{background:#2a2418;border-color:rgba(240,192,64,.8)}
+.t-practice-note{margin-top:8px;font-size:11px;color:rgba(255,255,255,.4);letter-spacing:1px}
+.pr-top{align-items:center}
+.pr-back,.pr-back2{font-family:'Noto Sans JP',sans-serif}
+.pr-back{background:none;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);font-size:12px;padding:7px 14px;border-radius:6px;cursor:pointer;letter-spacing:1px}
+.pr-back:hover{background:rgba(255,255,255,.07)}
+.pr-modeline{text-align:center;font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.4);padding:6px 0 2px}
+.pr-best{text-align:right;min-width:60px}
+.pr-best-lbl{font-size:10px;letter-spacing:2px;color:rgba(255,255,255,.45)}
+.pr-best-num{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1;color:var(--gold2)}
+.pr-foot{display:none;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;margin:0 12px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;flex-wrap:wrap}
+.pr-foot.show{display:flex;animation:prFootIn .35s ease}
+@keyframes prFootIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.pr-foot-lbl{font-size:12px;letter-spacing:1px;color:rgba(255,255,255,.55)}
+.pr-foot-num{font-family:'Bebas Neue',sans-serif;font-size:34px;line-height:1.1;color:var(--gold2)}
+.pr-foot-num .pr-foot-sub{font-family:'Noto Sans JP',sans-serif;font-size:13px;color:rgba(255,255,255,.6);letter-spacing:1px}
+.pr-foot-btns{display:flex;gap:10px;flex-wrap:wrap}
+.pr-again,.pr-back2{font-size:14px;letter-spacing:2px;padding:13px 28px;clip-path:none;border-radius:8px}
 
 /* フィードバック */
 #fb-ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none;z-index:200}
@@ -209,14 +235,20 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.25</div>
+    <div class="t-ver">MPK Ver 0.9.33</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
     </div>
     <div class="t-hand-row">
-      <button class="btn-go" onclick="startGame('right')">極まる（右利き）</button>
-      <button class="btn-go alt" onclick="startGame('left')">極まる（左利き）</button>
+      <div class="t-hand-col">
+        <button class="btn-go" onclick="startGame('right')">極まる（右利き）</button>
+        <button class="btn-practice2" onclick="startPractice('right')">練習する（右利き）</button>
+      </div>
+      <div class="t-hand-col">
+        <button class="btn-go alt" onclick="startGame('left')">極まる（左利き）</button>
+        <button class="btn-practice2 alt" onclick="startPractice('left')">練習する（左利き）</button>
+      </div>
     </div>
     <div class="t-hand-note">利き手を選んでスタート。左利きはお手本の向きが左右反転します</div>
     <div class="t-flow">
@@ -313,12 +345,33 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
     </div>
     <div class="ad-slide-hint">← スライドして読めます！息抜きに！</div>
     <a class="btn-amazon" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener" onclick="gtag('event','amazon_click',{event_category:'ad',manga_folder:adCurrentFolder,slide_page:adTotal-adCarouselIdx})">Amazonで見る</a>
-    <button class="btn-continue" onclick="startGame()">続けて極まる</button>
+    <button class="btn-continue" onclick="adContinue()">続けて極まる</button>
   </div>
 </div>
 
 <div id="fail-banner">
   <div class="fail-inner" id="fail-inner"></div>
+</div>
+
+<!-- PRACTICE -->
+<div id="s-practice" class="screen">
+  <div class="set-progress" id="pr-progress"></div>
+  <div class="hud-top">
+    <button class="pr-back" onclick="exitPractice()">‹ タイトル</button>
+    <div class="hud-center">
+      <div class="hud-phase" id="pr-phase">直線①</div>
+      <div class="hud-qinfo" id="pr-qinfo">1問目 / 5問</div>
+    </div>
+    <div class="hud-right">
+      <div class="hud-score-lbl">SCORE</div>
+      <div class="hud-score-num" id="pr-score">0</div>
+    </div>
+  </div>
+  <div class="pr-modeline">練習モード — 同じ線を5本ためし描き・タイマーなし・ベスト1本を採用</div>
+  <div class="canvas-area">
+    <canvas id="pc"></canvas>
+    <div class="chint" id="pr-hint">光っている線からペン入れ</div>
+  </div>
 </div>
 
 <div id="fb-ov"><div class="fb-inner" id="fb-inner"></div></div>
@@ -683,7 +736,7 @@ function getRank(score) {
 let G = {};
 function initState() {
   G = {
-    score:0, setIndex:0, phaseIndex:0, qInPhase:0,
+    score:0, setIndex:0, phaseIndex:0, qInPhase:0, isPractice:false,
     combo:0, maxCombo:0, meterPct:0,
     drawing:false, drawn:[], judged:false,
     timeLeft:GAME_TIME, baseTime:GAME_TIME, timerId:null, timeUp:false,
@@ -1607,7 +1660,7 @@ function showResult(){
 
   const rank = getRank(G.score);
   document.getElementById('r-rank-emoji').textContent = rank.emoji;
-  document.getElementById('r-rank-name').textContent  = rank.name;
+  document.getElementById('r-rank-name').textContent  = G.isPractice ? rank.name+'【練習】' : rank.name;
   document.getElementById('r-score').textContent = G.score.toLocaleString();
 
   const total   = G.allScores.length;
@@ -1821,7 +1874,9 @@ function showResult(){
     }
   }
 
-  weakHtml += `${scoreComment}<br>${axisComment}もう一度挑戦しよう！`;
+  weakHtml += G.isPractice
+    ? `練習が終わったら本番に挑戦しよう！`
+    : `${scoreComment}<br>${axisComment}もう一度挑戦しよう！`;
 
   document.getElementById('r-body').innerHTML =
     `<div class="weakness-box"><div class="weakness-hd">⚠ 弱点アドバイス</div><div class="weakness-body">${weakHtml}</div></div>`;
@@ -1864,11 +1919,330 @@ function renderDebugSheet() {
   });
 }
 
+// ============================================================
+// PRACTICE MODE （練習：本番と同じ4フェーズ進行。各問は「同じ形を5本ためし描き→ベスト1本を採用」。
+//   採点・点数の出方は本番のまま。タイマー・コンボ・時間ペナルティのみ無し。確認なしで自動進行し、最後に結果画面）
+// ============================================================
+const pcanvas = document.getElementById('pc');
+const pctx = pcanvas.getContext('2d');
+let P = null;
+const PR_COUNT = 5;
+const PR_SPACING = 50;     // 5本の間隔
+const PR_SHOW_MS = 1200;   // ベストを見せてから次へ進むまで
+
+function prResizeCanvas(){
+  const area = pcanvas.parentElement.getBoundingClientRect();
+  const W = Math.min(area.width - 20, (area.height - 20) * 1.55, 640);
+  const H = W / 1.55;
+  pcanvas.width = Math.floor(W);
+  pcanvas.height = Math.floor(H);
+}
+function prGetPos(e){
+  const r = pcanvas.getBoundingClientRect();
+  const s = e.touches ? e.touches[0] : e;
+  const pressure = (e.pressure !== undefined && e.pressure > 0) ? e.pressure : 0.5;
+  return { x: s.clientX - r.left, y: s.clientY - r.top, p: pressure, t: performance.now() };
+}
+
+function startPractice(hand){
+  if(hand==='right'||hand==='left') currentHand=hand;
+  if(P && P.rafId) cancelAnimationFrame(P.rafId);
+  gtag('event','practice_start',{event_category:'game',hand:currentHand});
+  initState();                  // 結果画面が参照するG（score/allScores/各List等）を本番と同じ形で使う
+  G.isPractice=true;
+  lineLenQueue0=[];lineLenQueue1=[];curveLenQueue2=[];curveLenQueue3=[];
+  showScreen('s-practice');
+  prResizeCanvas();
+  const prog=document.getElementById('pr-progress'); prog.innerHTML='';
+  for(let i=0;i<Q_PER_PHASE;i++){const seg=document.createElement('div');seg.className='set-seg '+(i===0?'active':'upcoming');prog.appendChild(seg);}
+  document.getElementById('pr-score').textContent='0';
+  prNextProblem();
+}
+function exitPractice(){
+  if(P && P.rafId) cancelAnimationFrame(P.rafId);
+  P=null; showScreen('s-title');
+}
+// 結果→広告→「続ける」の遷移先を、練習から来たら練習、本番なら本番に振り分け
+function adContinue(){ if(G.isPractice) startPractice(); else startGame(); }
+
+function prBuildSlots(W,H,phaseIdx){
+  // 難易度を毎問ランダムに（本番の「ループごとに直線が長く・曲線がキツく」を最初から織り交ぜる）
+  const savedSet=G.setIndex;
+  G.setIndex=Math.floor(Math.random()*6);            // 0〜5ループ相当
+  lineLenQueue0=[];lineLenQueue1=[];curveLenQueue2=[];curveLenQueue3=[];
+  const q=GENERATORS[phaseIdx](W,H);                 // 形を1本ぶんもらう
+  G.setIndex=savedSet;                               // 結果表示用に戻す（練習は常に0）
+  if(currentHand==='left') mirrorQuestion(q,W);
+
+  const a=q.pts[0], b=q.pts[q.pts.length-1];
+  let dx=b.x-a.x, dy=b.y-a.y; const dl=Math.hypot(dx,dy)||1; dx/=dl; dy/=dl;
+  const nx=-dy, ny=dx;                                // 直交方向（線が縦長→横に並ぶ／横長→上下に並ぶ）
+
+  let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
+  q.pts.forEach(p=>{minx=Math.min(minx,p.x);miny=Math.min(miny,p.y);maxx=Math.max(maxx,p.x);maxy=Math.max(maxy,p.y);});
+  const cx=(minx+maxx)/2, cy=(miny+maxy)/2;
+  const tx=W/2-cx, ty=H/2-cy;                         // 束の中心を画面中央へ
+
+  const half=(PR_COUNT-1)/2; let slots=[];
+  for(let k=0;k<PR_COUNT;k++){
+    const off=(k-half)*PR_SPACING; const ox=tx+nx*off, oy=ty+ny*off;
+    slots.push({
+      pts:q.pts.map(p=>({x:p.x+ox,y:p.y+oy})),
+      tol:q.tol, basePt:q.basePt, type:q.type,
+      angleDeg:q.angleDeg, lenPx:q.lenPx, baseTol:q.baseTol, sagPct:q.sagPct||null, group:q.group, label:q.label
+    });
+  }
+  // 画面内に束ごとクランプ
+  let bx0=1e9,by0=1e9,bx1=-1e9,by1=-1e9;
+  slots.forEach(s=>s.pts.forEach(p=>{bx0=Math.min(bx0,p.x);by0=Math.min(by0,p.y);bx1=Math.max(bx1,p.x);by1=Math.max(by1,p.y);}));
+  const pad=24; let sx=0,sy=0;
+  if(bx0<pad) sx=pad-bx0; else if(bx1>W-pad) sx=(W-pad)-bx1;
+  if(by0<pad) sy=pad-by0; else if(by1>H-pad) sy=(H-pad)-by1;
+  if(sx||sy) slots.forEach(s=>s.pts=s.pts.map(p=>({x:p.x+sx,y:p.y+sy})));
+
+  // 描く順：並ぶ向きで決定（左右に並ぶなら左から／上下に並ぶなら上から）
+  slots.forEach(s=>{let mx=0,my=0;s.pts.forEach(p=>{mx+=p.x;my+=p.y;});s._cx=mx/s.pts.length;s._cy=my/s.pts.length;});
+  const horiz=Math.abs(nx)>=Math.abs(ny);
+  slots.sort((u,v)=> horiz ? ((u._cx-v._cx)||(u._cy-v._cy)) : ((u._cy-v._cy)||(u._cx-v._cx)) );
+  return {slots, horiz};
+}
+
+function prNextProblem(){
+  if(P && P.rafId) cancelAnimationFrame(P.rafId);
+  const built=prBuildSlots(pcanvas.width,pcanvas.height,G.phaseIndex);
+  P={ slots:built.slots, horiz:built.horiz, curIdx:0,
+      metrics:new Array(PR_COUNT).fill(null),
+      strokes:new Array(PR_COUNT).fill(null),
+      drawing:false, drawn:[], drawStartTime:0,
+      done:false, bestIdx:-1, glow:0, rafId:null };
+  const ph=PHASES[G.phaseIndex];
+  const pe=document.getElementById('pr-phase');
+  pe.textContent=ph.name; pe.className='hud-phase '+ph.cls;
+  document.getElementById('pr-qinfo').textContent=(G.qInPhase+1)+'問目 / '+Q_PER_PHASE+'問';
+  document.getElementById('pr-hint').style.opacity='1';
+  prUpdateProgress();
+  prRender();
+}
+function prUpdateProgress(){
+  document.querySelectorAll('#pr-progress .set-seg').forEach((seg,i)=>{
+    seg.className='set-seg '+(i<G.qInPhase?'done':i===G.qInPhase?'active':'upcoming');
+  });
+}
+
+pcanvas.addEventListener('pointerdown', e=>{
+  if(!P || P.done || P.curIdx>=PR_COUNT) return;
+  P.drawing=true; P.drawn=[]; P.drawStartTime=performance.now();
+  document.getElementById('pr-hint').style.opacity='0';
+  P.drawn.push(prGetPos(e));
+  pcanvas.setPointerCapture(e.pointerId);
+});
+pcanvas.addEventListener('pointermove', e=>{
+  if(!P || !P.drawing) return;
+  P.drawn.push(prGetPos(e)); prRender();
+});
+pcanvas.addEventListener('pointerup', e=>{
+  if(!P || !P.drawing) return;
+  P.drawing=false;
+  const pos=prGetPos(e), last=P.drawn[P.drawn.length-1];
+  if(!last || Math.hypot(pos.x-last.x,pos.y-last.y)>0.5) P.drawn.push(pos);
+  if(P.drawn.length>4) prJudgeStroke(); else prRender();
+});
+
+function prJudgeStroke(){
+  const cur=P.slots[P.curIdx];
+  const elapsedMs=performance.now()-P.drawStartTime;
+  // 本番judgeと同じ計測・得点式（時間ペナルティ・コンボのみ無し）
+  const speed=calcSpeed(P.drawn, elapsedMs);
+  const shake=calcShake(P.drawn, cur.pts, cur.tol);
+  const precision=calcPrecision(P.drawn, cur.pts, cur.tol, cur.type);
+  const accuracy=precision;
+  const multi    = accuracy>=85?1.5:accuracy>=75?1.2:accuracy>=65?1.0:accuracy>=50?.6:.2;
+  const spdMulti = speed>=80?1.00:speed>=65?0.92:speed>=50?0.85:0.80;
+  const earned   = Math.round(cur.basePt*multi*spdMulti);
+  const { outsideRatio, avgExcess }=calcOvershoot(P.drawn, cur.pts, cur.tol);
+  const endPenalty=calcEndpointPenalty(P.drawn, cur.pts);
+  const hookPenalty=calcHookPenalty(P.drawn);
+  const deductions={ overshoot:Math.round(outsideRatio*50+Math.min(avgExcess/cur.tol,1)*25), endpoint:endPenalty, hook:hookPenalty };
+
+  P.metrics[P.curIdx]={ type:cur.type, label:cur.label, accuracy, earned, group:cur.group||'—',
+    angleDeg:cur.angleDeg||null, lenPx:cur.lenPx||null, baseTol:cur.baseTol||null, speed, shake, precision, deductions };
+  P.strokes[P.curIdx]=P.drawn.slice();
+
+  prScorePop(earned, accuracy);
+  showFeedback(accuracy, speed);
+  prRender();
+
+  setTimeout(()=>{
+    hideFeedback();
+    P.curIdx++;
+    if(P.curIdx>=PR_COUNT){ prFinishProblem(); }
+    else { document.getElementById('pr-hint').style.opacity='1'; prRender(); }
+  }, 500);
+}
+
+function prScorePop(pt, acc){
+  const r=pcanvas.getBoundingClientRect();
+  const el=document.createElement('div');
+  el.className='score-pop';
+  el.style.left=(r.left+r.width/2-30)+'px';
+  el.style.top=(r.top+r.height/2-20)+'px';
+  el.style.color=acc>=80?'var(--gold2)':acc>=65?'var(--green)':acc>=50?'var(--orange)':'var(--red)';
+  el.textContent='+'+pt;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1000);
+}
+
+function prFinishProblem(){
+  let best=-1,ba=-1,be=-1;
+  P.metrics.forEach((m,i)=>{ if(!m) return;
+    if(m.accuracy>ba || (m.accuracy===ba && m.earned>be)){ ba=m.accuracy; be=m.earned; best=i; } });
+  P.bestIdx=best; P.done=true;
+  // ベスト1本を本番と同じ構造でGに積む（結果画面の段位・3軸・弱点分析にそのまま使われる）
+  const bm=P.metrics[best];
+  G.allScores.push(bm);
+  G.speedList.push(bm.speed);
+  G.shakeList.push(bm.shake);
+  G.precisionList.push(bm.precision);
+  G.score+=bm.earned;
+  document.getElementById('pr-score').textContent=G.score;
+  document.getElementById('pr-hint').style.opacity='0';
+  prStartGlow();
+  setTimeout(prAdvance, PR_SHOW_MS);   // ベストを見せる間（確認なしで自動）
+}
+
+function prAdvance(){
+  if(P && P.rafId){ cancelAnimationFrame(P.rafId); P.rafId=null; }
+  G.qInPhase++;
+  if(G.qInPhase>=Q_PER_PHASE){
+    G.qInPhase=0; G.phaseIndex++;
+    if(G.phaseIndex>=PHASES.length){           // 全4フェーズ完了 → 結果画面（ループなし）
+      gtag('event','practice_done',{event_category:'game',score:G.score});
+      P=null;
+      showResult();
+      return;
+    }
+  }
+  prNextProblem();
+}
+
+function prStartGlow(){
+  const t0=performance.now();
+  (function loop(now){
+    if(!P || !P.done){ if(P) P.rafId=null; return; }
+    P.glow=(Math.sin((now-t0)/420)+1)/2;
+    prRender();
+    P.rafId=requestAnimationFrame(loop);
+  })(performance.now());
+}
+
+function prDrawPath(pts){
+  pctx.beginPath(); pctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++) pctx.lineTo(pts[i].x,pts[i].y);
+  pctx.stroke();
+}
+function prDrawUserStroke(stroke, color){
+  if(!stroke || stroke.length<2) return;
+  pctx.lineCap='round'; pctx.lineJoin='round'; pctx.strokeStyle=color;
+  for(let i=1;i<stroke.length;i++){
+    const prev=stroke[i-1], curr=stroke[i];
+    pctx.lineWidth=0.5+((prev.p+curr.p)/2)*3.0;
+    pctx.beginPath(); pctx.moveTo(prev.x,prev.y);
+    if(i<stroke.length-1){const mx=(curr.x+stroke[i+1].x)/2,my=(curr.y+stroke[i+1].y)/2;pctx.quadraticCurveTo(curr.x,curr.y,mx,my);}
+    else pctx.lineTo(curr.x,curr.y);
+    pctx.stroke();
+  }
+}
+
+function prScoreBadge(x, y, text, isBest, align){
+  pctx.font = isBest ? 'bold 13px sans-serif' : '12px sans-serif';
+  const w = pctx.measureText(text).width;
+  const padX=6, h=18, bw=w+padX*2, r=5;
+  let bx;
+  if(align==='center') bx=x-bw/2;
+  else bx=x;                       // 'left' = xが左端
+  const by=y-h/2;
+  pctx.beginPath();
+  pctx.moveTo(bx+r,by);
+  pctx.arcTo(bx+bw,by,bx+bw,by+h,r); pctx.arcTo(bx+bw,by+h,bx,by+h,r);
+  pctx.arcTo(bx,by+h,bx,by,r);       pctx.arcTo(bx,by,bx+bw,by,r);
+  pctx.closePath();
+  pctx.fillStyle = isBest ? 'rgba(39,174,96,.18)' : 'rgba(40,36,30,.07)';
+  pctx.fill();
+  pctx.fillStyle = isBest ? '#178a48' : '#5a574f';
+  pctx.textAlign='left'; pctx.textBaseline='middle';
+  pctx.fillText(text, bx+padX, y+0.5);
+  pctx.textBaseline='alphabetic'; pctx.textAlign='left';
+}
+
+function prRender(){
+  if(!P) return;
+  const W=pcanvas.width, H=pcanvas.height;
+  pctx.clearRect(0,0,W,H);
+  pctx.fillStyle='#f2ede4'; pctx.fillRect(0,0,W,H);
+  pctx.strokeStyle='rgba(0,0,0,.04)'; pctx.lineWidth=.5;
+  for(let x=0;x<W;x+=24){pctx.beginPath();pctx.moveTo(x,0);pctx.lineTo(x,H);pctx.stroke();}
+  for(let y=0;y<H;y+=24){pctx.beginPath();pctx.moveTo(0,y);pctx.lineTo(W,y);pctx.stroke();}
+
+  P.slots.forEach((s,i)=>{
+    const isCur=(!P.done && i===P.curIdx);
+    const isBest=(P.done && i===P.bestIdx);
+    const drawn=!!P.strokes[i];
+
+    pctx.lineCap='round'; pctx.lineJoin='round';
+    pctx.strokeStyle=isCur?'rgba(192,57,43,.14)':'rgba(192,57,43,.07)';
+    pctx.lineWidth=s.tol*2; prDrawPath(s.pts);
+
+    pctx.setLineDash([8,5]);
+    pctx.strokeStyle=isCur?'rgba(192,57,43,.7)':'rgba(192,57,43,.3)';
+    pctx.lineWidth=2; prDrawPath(s.pts); pctx.setLineDash([]);
+
+    // 終点（本番同様の薄い円）
+    const ep=s.pts[s.pts.length-1];
+    pctx.fillStyle=isCur?'rgba(192,57,43,.4)':'rgba(192,57,43,.25)';
+    pctx.beginPath(); pctx.arc(ep.x,ep.y,isCur?7:6,0,Math.PI*2); pctx.fill();
+    // 始点
+    pctx.fillStyle=isCur?'rgba(192,57,43,.95)':'rgba(192,57,43,.5)';
+    pctx.beginPath(); pctx.arc(s.pts[0].x,s.pts[0].y,isCur?8:6,0,Math.PI*2); pctx.fill();
+    if(isCur){ pctx.fillStyle='rgba(192,57,43,.95)'; pctx.font='bold 11px sans-serif'; pctx.fillText('START', s.pts[0].x+11, s.pts[0].y-12); }
+
+    if(drawn){
+      if(isBest){
+        const g=P.glow;
+        pctx.save();
+        pctx.shadowColor='rgba(39,174,96,'+(0.5+0.5*g)+')'; pctx.shadowBlur=10+14*g;
+        pctx.strokeStyle='#1f9d55'; pctx.lineCap='round'; pctx.lineJoin='round'; pctx.lineWidth=3.4;
+        prDrawPath(P.strokes[i]);
+        pctx.restore();
+        prDrawUserStroke(P.strokes[i], '#178a48');
+      } else {
+        prDrawUserStroke(P.strokes[i], '#15151a');
+      }
+    }
+
+    const m=P.metrics[i];
+    if(m && (P.done || drawn)){
+      // 各線の終点の延長線上（終点の少し先）に置く＝その線に必ず沿う
+      const a=s.pts[0], b=s.pts[s.pts.length-1];
+      let dx=b.x-a.x, dy=b.y-a.y; const dl=Math.hypot(dx,dy)||1; dx/=dl; dy/=dl;
+      const off=26;
+      const bxp=Math.max(22, Math.min(W-22, b.x+dx*off));
+      const byp=Math.max(13, Math.min(H-13, b.y+dy*off));
+      prScoreBadge(bxp, byp, ''+m.accuracy, isBest, 'center');
+    }
+  });
+
+  if(P.drawing && P.drawn.length>1) prDrawUserStroke(P.drawn, '#0a0a0f');
+}
+
 window.addEventListener('resize',()=>{
   if(document.getElementById('s-game').classList.contains('active')){
     resizeCanvas();
     if(G.currentQ){G.currentQ=GENERATORS[G.phaseIndex](canvas.width,canvas.height);if(currentHand==='left')mirrorQuestion(G.currentQ,canvas.width);}
     render();
+  } else if(document.getElementById('s-practice').classList.contains('active') && P){
+    if(P.rafId) cancelAnimationFrame(P.rafId);
+    prResizeCanvas();
+    prNextProblem();   // 現在の問の5本を作り直し（描きかけは失う）
   }
 });
 </script>
