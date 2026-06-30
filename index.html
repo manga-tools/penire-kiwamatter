@@ -209,7 +209,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.24</div>
+    <div class="t-ver">MPK Ver 0.9.25</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -626,9 +626,12 @@ function weaknessTextBin(bin) {
   // 0・15・30・45分はキリのいい時計方向に言い換え、それ以外は「○分方向」
   const clockMap = { 0:'時計の12時方向', 15:'時計の3時方向', 30:'時計の6時方向', 45:'時計の9時方向' };
   const dir = clockMap[m] || `時計の${m}分方向`;
+  // 区間の代表的な長さ（短め/中くらい/長め）。「○○方向に引く【短めの】…」の位置に差し込む。
+  const lenLabel = (bin.avgLen != null && bin.baseTol) ? lenToLabel(bin.avgLen, bin.baseTol) : '';
+  const lenPart = lenLabel ? `${lenLabel}の` : '';
   const bulge = bin.repType === '曲線①' ? bulgeWord('左膨らみ') : bin.repType === '曲線②' ? bulgeWord('右膨らみ') : '';
   const kind = (bin.repType === '直線①' || bin.repType === '直線②') ? '直線' : '曲線';
-  return bulge ? `${dir}に引く${bulge}の${kind}` : `${dir}に引く${kind}`;
+  return bulge ? `${dir}に引く${lenPart}${bulge}の${kind}` : `${dir}に引く${lenPart}${kind}`;
 }
 
 // 結果画面の各行ラベルも日本語に
@@ -898,7 +901,7 @@ function judge() {
 
   G.score += earned;
   G.phaseScores.push(accuracy);
-  G.allScores.push({ type:q.type, label:q.label, accuracy, earned, group:q.group||'—', angleDeg:q.angleDeg||null, lenPx:q.lenPx||null, speed, shake, precision, deductions });
+  G.allScores.push({ type:q.type, label:q.label, accuracy, earned, group:q.group||'—', angleDeg:q.angleDeg||null, lenPx:q.lenPx||null, baseTol:q.baseTol||null, speed, shake, precision, deductions });
 
   // 累積に追加
   G.speedList.push(speed);
@@ -1642,7 +1645,11 @@ function showResult(){
       const typeCounts = {};
       inBin.forEach(s => { typeCounts[s.type] = (typeCounts[s.type]||0)+1; });
       const repType = Object.keys(typeCounts).sort((a,b)=>typeCounts[b]-typeCounts[a])[0];
-      return { ...bin, avg, count: inBin.length, repType };
+      // 区間内の平均の長さ（短め/中くらい/長めの代表値に使う）
+      const lenArr = inBin.filter(s => s.lenPx != null);
+      const avgLen = lenArr.length ? lenArr.reduce((a,b)=>a+b.lenPx,0) / lenArr.length : null;
+      const baseTol = lenArr.length ? lenArr[0].baseTol : null;
+      return { ...bin, avg, count: inBin.length, repType, avgLen, baseTol };
     }).filter(Boolean);
 
     if (!results.length) return { best:null, worst:null };
