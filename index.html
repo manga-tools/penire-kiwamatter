@@ -103,6 +103,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 /* キャンバス */
 .canvas-area{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;position:relative}
 #gc{background:var(--paper);display:block;touch-action:none;cursor:crosshair;box-shadow:0 0 0 1px rgba(0,0,0,.4),0 6px 32px rgba(0,0,0,.5)}
+#pc{touch-action:none} /* Androidでスクロール/pull-to-refreshに食われてpointercancelする線切れ防止 */
 .chint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.18);pointer-events:none;transition:opacity .3s}
 /* practice mode */
 .t-practice-row{margin-top:18px;text-align:center}
@@ -235,7 +236,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.33</div>
+    <div class="t-ver">MPK Ver 0.9.34</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -772,7 +773,10 @@ function getPos(e) {
   // 筆圧：PointerEventのpressure（0〜1）。タッチ・マウスは0.5固定
   const pressure = (e.pressure !== undefined && e.pressure > 0) ? e.pressure : 0.5;
   // t：速度計測用のタイムスタンプ（区間速度から手の速さを測る）
-  return { x: s.clientX - r.left, y: s.clientY - r.top, p: pressure, t: performance.now() };
+  // ※ performance.now()（＝ハンドラ実行時刻）だとイベント発生時刻とのズレが
+  //   環境ごとのジッタになり速度が上振れするため、イベント自身のtimeStampを使う。
+  //   （performance.now()と同一起点なのでdrawStartTimeとの混用も問題なし）
+  return { x: s.clientX - r.left, y: s.clientY - r.top, p: pressure, t: e.timeStamp };
 }
 
 canvas.addEventListener('pointerdown', e => {
@@ -786,7 +790,11 @@ canvas.addEventListener('pointerdown', e => {
 });
 canvas.addEventListener('pointermove', e => {
   if (!G.drawing || G.judged) return;
-  G.drawn.push(getPos(e));
+  // Chrome/Androidはpointermoveをフレームに間引き、中間点はgetCoalescedEvents()に
+  // まとめて入る。取り込まないと環境で点密度が変わる（Safariは未対応→fallback）。
+  const ces = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+  if (ces.length) { for (const ce of ces) G.drawn.push(getPos(ce)); }
+  else G.drawn.push(getPos(e));
   render();
 });
 canvas.addEventListener('pointerup', e => {
@@ -798,7 +806,9 @@ canvas.addEventListener('pointerup', e => {
   if (!last || Math.hypot(pos.x - last.x, pos.y - last.y) > 0.5) {
     G.drawn.push(pos);
   }
-  if (G.drawn.length > 4) judge();
+  // coalesced取込後は偶発タップでも点数が4を超えるため、点数だけでなく
+  // 「リサンプル後3点以上（≒軌跡3px以上）」も要求してタップを弾く（環境非依存）
+  if (G.drawn.length > 4 && resampleStroke(G.drawn).length >= 3) judge();
 });
 
 // ============================================================
@@ -927,9 +937,12 @@ function judge() {
   const elapsedMs = performance.now() - G.drawStartTime;
 
   // 3軸計測
-  const speed     = calcSpeed(G.drawn, elapsedMs);
-  const shake     = calcShake(G.drawn, q.pts, q.tol);
-  const precision = calcPrecision(G.drawn, q.pts, q.tol, q.type);
+  // 幾何系（shake/precision/減点系）は環境非依存化のため3px等間隔にリサンプルした
+  // 点列で測る。speedだけは生タイムスタンプが必要なので生drawn＋キャンバス基準長を渡す。
+  const rs = resampleStroke(G.drawn);
+  const speed     = calcSpeed(G.drawn, elapsedMs, Math.min(canvas.width, canvas.height));
+  const shake     = calcShake(rs, q.pts, q.tol);
+  const precision = calcPrecision(rs, q.pts, q.tol, q.type);
 
   // ゲーム判定用精度（従来通り）
   const accuracy = precision;
@@ -943,9 +956,9 @@ function judge() {
   const earned = Math.round(q.basePt * multi * spdMulti);
 
   // 減点詳細を計算（弱点分析用）
-  const { outsideRatio, avgExcess } = calcOvershoot(G.drawn, q.pts, q.tol);
-  const endPenalty = calcEndpointPenalty(G.drawn, q.pts);
-  const hookPenalty = calcHookPenalty(G.drawn);
+  const { outsideRatio, avgExcess } = calcOvershoot(rs, q.pts, q.tol);
+  const endPenalty = calcEndpointPenalty(rs, q.pts);
+  const hookPenalty = calcHookPenalty(rs);
   const deductions = {
     overshoot: Math.round(outsideRatio * 50 + Math.min(avgExcess / q.tol, 1) * 25),
     endpoint: endPenalty,
@@ -1150,45 +1163,91 @@ function showFailBanner(avgAcc) {
 
 // 速度スコア（0〜100）：速いほど高得点
 // 線の長さに対して何秒かかったかで算出
-function calcSpeed(drawn, elapsedMs) {
+// 幾何系スコア用リサンプリング：ストロークを弧長3px等間隔の点列に正規化する。
+// pointermoveの発火頻度は環境で大きく違い（Chrome/Safari≒画面Hz、Firefox＝入力
+// デバイス生レート、coalesced取込後はさらに高密度）、点密度がそのまま
+// smoothness/精度系スコアの差になっていた。同じ軌跡→同じ点列に揃えることで
+// 採点を環境非依存にする。始点・終点は正確に保持（始点終点ペナルティ用）。
+// ※ calcSpeedだけは生のタイムスタンプ間隔が必要なので、生drawnのまま渡すこと。
+function resampleStroke(drawn, spacing = 3) {
+  if (drawn.length < 3) return drawn.slice();
+  const res = [drawn[0]];
+  let ax = drawn[0].x, ay = drawn[0].y, at = drawn[0].t, ap = drawn[0].p;
+  let acc = 0;
+  for (let i = 1; i < drawn.length; i++) {
+    const bx = drawn[i].x, by = drawn[i].y, bt = drawn[i].t, bp = drawn[i].p;
+    let seg = Math.hypot(bx - ax, by - ay);
+    while (acc + seg >= spacing) {
+      const r = (spacing - acc) / seg;
+      ax += (bx - ax) * r; ay += (by - ay) * r;
+      at += (bt - at) * r; ap += (bp - ap) * r;
+      res.push({ x: ax, y: ay, p: ap, t: at });
+      seg = Math.hypot(bx - ax, by - ay);
+      acc = 0;
+    }
+    acc += seg;
+    ax = bx; ay = by; at = bt; ap = bp;
+  }
+  const last = drawn[drawn.length - 1];
+  const tail = res[res.length - 1];
+  if (Math.hypot(last.x - tail.x, last.y - tail.y) > 0.01) res.push({ x: last.x, y: last.y, p: last.p, t: last.t });
+  return res;
+}
+
+function calcSpeed(drawn, elapsedMs, minWH) {
   if (drawn.length < 4) return 0;
+  // キャンバススケール正規化：形状はMath.min(W,H)でスケールするのに速度基準
+  // （600px/s=100点）は絶対値だったため、小画面（スマホ・Android）は同じ手の
+  // 動きでもpx/sが低く出てspeedが構造的に上がらなかった。基準412px
+  // （上限640×412キャンバス）に対する比で補正し、画面サイズ非依存にする。
+  const sc = 412 / (minWH || 412);
   // 各点のタイムスタンプから「区間ごとの速度（px/s）」を求め、その60パーセンタイルで評価する。
   // 平均だと始点・終点の減速時間が短い線ほど大きく効いて不当に低く出る（長さバイアス）。
   // 区間速度の代表値を使うことで、線の長さに依存せず手の速さそのものを測れる。
+  // ※ 区間は「16ms以上の窓の変位」で取る（≒60Hz相当に正規化）。隣接点ペアだと
+  //   高Hz環境（coalesced取込後・Firefox生レート）では震えのジグザグが区間距離に
+  //   乗って、雑な線ほど速度が上振れしていた。16ms窓の直線変位なら環境非依存。
   const vels = [];
+  let i0 = 0;
   for (let i = 1; i < drawn.length; i++) {
-    const dt = (drawn[i].t - drawn[i-1].t) / 1000;
-    if (dt <= 0) continue;
-    const d = Math.hypot(drawn[i].x - drawn[i-1].x, drawn[i].y - drawn[i-1].y);
-    vels.push(d / dt);
+    const dtMs = drawn[i].t - drawn[i0].t;
+    if (dtMs < 16) continue;
+    const d = Math.hypot(drawn[i].x - drawn[i0].x, drawn[i].y - drawn[i0].y);
+    vels.push(d / (dtMs / 1000));
+    i0 = i;
   }
   if (!vels.length) {
     // 旧来のフォールバック（タイムスタンプが無い場合）
     if (elapsedMs <= 0) return 0;
     let L = 0;
     for (let i = 1; i < drawn.length; i++) L += Math.hypot(drawn[i].x-drawn[i-1].x, drawn[i].y-drawn[i-1].y);
-    return Math.min(100, Math.max(0, Math.round((L / (elapsedMs/1000)) / 6)));
+    return Math.min(100, Math.max(0, Math.round((L / (elapsedMs/1000)) * sc / 6)));
   }
   vels.sort((a, b) => a - b);
   const v = vels[Math.min(vels.length - 1, Math.floor(vels.length * 0.6))];
-  // 目安：150px/s→遅い(25点), 400px/s→普通(67点), 600px/s→速い(100点)
-  return Math.min(100, Math.max(0, Math.round(v / 6)));
+  // 目安（基準412pxキャンバス時）：150px/s→遅い(25点), 400px/s→普通(67点), 600px/s→速い(100点)
+  return Math.min(100, Math.max(0, Math.round(v * sc / 6)));
 }
 
 // ブレスコア（0〜100）：滑らかさ＋ガイド帯はみ出しペナルティ
 // 純粋な滑らかさ（0〜100）：はみ出しは見ず、線の震え/ガタつきだけを測る
 // precisionの「美しさ」評価にも、calcShakeにも共通で使う土台
 function calcSmoothness(drawn) {
-  if (drawn.length < 5) return 100;
+  // ※ resampleStroke後（3px等間隔）の点列を渡すこと。
+  //   旧版は「5点窓」＝60Hzだと約±16px・240Hzだと約±4pxと、環境で窓の物理幅が
+  //   変わり同じ線でも点数がズレていた。等間隔化後は ±8点＝±24px の固定窓になり
+  //   環境非依存。窓幅・感度(×12)は旧60Hz実測の帯（丁寧98/普通95/雑90/激ブレ73）に
+  //   合わせてNode合成ストロークで再調整済み（60〜240Hzで各帯±0.5点以内に収束）。
+  const K = 8;
+  if (drawn.length < 2*K + 1) return 100;
 
-  // 強いスムージング（5点移動平均を3回）
+  // 強いスムージング（±8点移動平均を3回）
   function smooth(pts) {
     return pts.map((p, i) => {
-      if (i < 2 || i >= pts.length - 2) return p;
-      return {
-        x: (pts[i-2].x + pts[i-1].x + p.x + pts[i+1].x + pts[i+2].x) / 5,
-        y: (pts[i-2].y + pts[i-1].y + p.y + pts[i+1].y + pts[i+2].y) / 5,
-      };
+      if (i < K || i >= pts.length - K) return p;
+      let sx = 0, sy = 0;
+      for (let j = -K; j <= K; j++) { sx += pts[i+j].x; sy += pts[i+j].y; }
+      return { x: sx / (2*K + 1), y: sy / (2*K + 1) };
     });
   }
   const smoothed = smooth(smooth(smooth(drawn)));
@@ -1199,7 +1258,7 @@ function calcSmoothness(drawn) {
     sumDiff += Math.hypot(drawn[i].x - smoothed[i].x, drawn[i].y - smoothed[i].y);
   }
   const avgDiff = sumDiff / drawn.length;
-  return Math.min(100, Math.max(0, Math.round(100 - avgDiff * 10)));
+  return Math.min(100, Math.max(0, Math.round(100 - avgDiff * 12)));
 }
 
 // ブレスコア（0〜100）：滑らかさ ＋ ガイド帯はみ出しペナルティ（3軸表示用）
@@ -1941,7 +2000,7 @@ function prGetPos(e){
   const r = pcanvas.getBoundingClientRect();
   const s = e.touches ? e.touches[0] : e;
   const pressure = (e.pressure !== undefined && e.pressure > 0) ? e.pressure : 0.5;
-  return { x: s.clientX - r.left, y: s.clientY - r.top, p: pressure, t: performance.now() };
+  return { x: s.clientX - r.left, y: s.clientY - r.top, p: pressure, t: e.timeStamp }; // 本番getPosと同じ理由でtimeStamp
 }
 
 function startPractice(hand){
@@ -2038,30 +2097,34 @@ pcanvas.addEventListener('pointerdown', e=>{
 });
 pcanvas.addEventListener('pointermove', e=>{
   if(!P || !P.drawing) return;
-  P.drawn.push(prGetPos(e)); prRender();
+  const ces = e.getCoalescedEvents ? e.getCoalescedEvents() : []; // 本番と同じ理由
+  if(ces.length){ for(const ce of ces) P.drawn.push(prGetPos(ce)); }
+  else P.drawn.push(prGetPos(e));
+  prRender();
 });
 pcanvas.addEventListener('pointerup', e=>{
   if(!P || !P.drawing) return;
   P.drawing=false;
   const pos=prGetPos(e), last=P.drawn[P.drawn.length-1];
   if(!last || Math.hypot(pos.x-last.x,pos.y-last.y)>0.5) P.drawn.push(pos);
-  if(P.drawn.length>4) prJudgeStroke(); else prRender();
+  if(P.drawn.length>4 && resampleStroke(P.drawn).length>=3) prJudgeStroke(); else prRender(); // 本番と同じタップ弾き
 });
 
 function prJudgeStroke(){
   const cur=P.slots[P.curIdx];
   const elapsedMs=performance.now()-P.drawStartTime;
   // 本番judgeと同じ計測・得点式（時間ペナルティ・コンボのみ無し）
-  const speed=calcSpeed(P.drawn, elapsedMs);
-  const shake=calcShake(P.drawn, cur.pts, cur.tol);
-  const precision=calcPrecision(P.drawn, cur.pts, cur.tol, cur.type);
+  const rs=resampleStroke(P.drawn); // 本番judgeと同じ環境非依存化
+  const speed=calcSpeed(P.drawn, elapsedMs, Math.min(pcanvas.width, pcanvas.height));
+  const shake=calcShake(rs, cur.pts, cur.tol);
+  const precision=calcPrecision(rs, cur.pts, cur.tol, cur.type);
   const accuracy=precision;
   const multi    = accuracy>=85?1.5:accuracy>=75?1.2:accuracy>=65?1.0:accuracy>=50?.6:.2;
   const spdMulti = speed>=80?1.00:speed>=65?0.92:speed>=50?0.85:0.80;
   const earned   = Math.round(cur.basePt*multi*spdMulti);
-  const { outsideRatio, avgExcess }=calcOvershoot(P.drawn, cur.pts, cur.tol);
-  const endPenalty=calcEndpointPenalty(P.drawn, cur.pts);
-  const hookPenalty=calcHookPenalty(P.drawn);
+  const { outsideRatio, avgExcess }=calcOvershoot(rs, cur.pts, cur.tol);
+  const endPenalty=calcEndpointPenalty(rs, cur.pts);
+  const hookPenalty=calcHookPenalty(rs);
   const deductions={ overshoot:Math.round(outsideRatio*50+Math.min(avgExcess/cur.tol,1)*25), endpoint:endPenalty, hook:hookPenalty };
 
   P.metrics[P.curIdx]={ type:cur.type, label:cur.label, accuracy, earned, group:cur.group||'—',
