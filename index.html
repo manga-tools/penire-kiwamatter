@@ -164,15 +164,8 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 #s-result{align-items:center;justify-content:flex-start;background:var(--ink);overflow-y:auto;height:100vh;-webkit-overflow-scrolling:touch}
 #s-ad{align-items:center;justify-content:center;background:var(--ink)}
 .ad-inner{text-align:center;width:100%;max-width:560px;padding:20px 0 24px}
-.ad-carousel-wrap{position:relative;width:100%;overflow:hidden;touch-action:pan-y}
-.ad-carousel-track{display:flex;transition:transform 0.3s ease;will-change:transform}
-.ad-carousel-slide{min-width:100%;display:flex;align-items:center;justify-content:center;padding:0 12px;box-sizing:border-box}
-.ad-carousel-slide img{width:auto;max-width:100%;height:72vh;object-fit:contain;display:block;border-radius:4px}
-.ad-slide-hint{font-size:12px;color:#fff;letter-spacing:3px;margin:10px 0 16px;text-align:center;padding-left:0}
-.ad-carousel-arrow{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.6);width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;user-select:none;-webkit-user-select:none}
-.ad-carousel-arrow.left{left:4px;width:44px;height:44px;font-size:26px;background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.6);color:#fff}
-.ad-carousel-arrow.right{right:4px}
-.btn-amazon{display:inline-block;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-weight:700;font-size:11px;letter-spacing:2px;padding:9px 20px;border:1px solid rgba(255,255,255,.12);cursor:pointer;border-radius:3px;margin-bottom:16px;text-decoration:none}
+.ad-promo{display:block;margin:0 auto 16px;padding:0 12px;box-sizing:border-box}
+.ad-promo img{display:block;width:auto;max-width:100%;max-height:76vh;margin:0 auto;border-radius:4px}
 .btn-continue{display:block;background:var(--red);color:#fff;font-family:'Noto Sans JP',sans-serif;font-weight:900;font-size:15px;letter-spacing:4px;padding:15px 20px;border:none;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);width:100%;transition:background .15s;margin:0 24px;width:calc(100% - 48px);box-sizing:border-box}
 .btn-continue:hover{background:var(--red2)}
 .result-wrap{max-width:500px;width:100%;padding:24px 18px 40px;text-align:center;margin:0 auto}
@@ -339,13 +332,9 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 
 <div id="s-ad" class="screen">
   <div class="ad-inner">
-    <div class="ad-carousel-wrap" id="ad-carousel-wrap">
-      <div class="ad-carousel-track" id="ad-carousel-track"></div>
-      <button class="ad-carousel-arrow left" id="ad-prev" aria-label="前へ">‹</button>
-      <button class="ad-carousel-arrow right" id="ad-next" aria-label="次へ">›</button>
-    </div>
-    <div class="ad-slide-hint">← スライドして読めます！息抜きに！</div>
-    <a class="btn-amazon" href="https://amzn.to/4gNiamu" target="_blank" rel="noopener" onclick="gtag('event','amazon_click',{event_category:'ad',manga_folder:adCurrentFolder,slide_page:adTotal-adCarouselIdx})">Amazonで見る</a>
+    <a class="ad-promo" href="https://nametank.jp/pages/manga-type-diagnosis?utm_source=gotosite&utm_medium=referral" target="_blank" rel="noopener" onclick="gtag('event','diagnosis_click',{event_category:'ad'})">
+      <img src="./manga-type-2a-1200x1700.jpg" alt="マンガ家タイプ診断">
+    </a>
     <button class="btn-continue" onclick="adContinue()">続けて極まる</button>
   </div>
 </div>
@@ -1586,83 +1575,9 @@ async function shareResult(){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 
-// ── AD CAROUSEL ──
-// 表示するマンガ一覧（フォルダ名と枚数）。増やす場合はここに追加。
-const AD_MANGA = [
-  { folder: 'preview1', pages: 11 },
-  { folder: 'preview2', pages: 11 },
-];
-
-let adCarouselIdx = 0;
-let adTotal = 0;      // 現在表示中マンガのページ数
-let adCurrentFolder = '';  // 現在表示中マンガのフォルダ名（GA4送信用）
-let adCarouselBound = false;
-
-function adCarouselGoTo(n){
-  adCarouselIdx = Math.max(0, Math.min(adTotal - 1, n));
-  const track = document.getElementById('ad-carousel-track');
-  if(track) track.style.transform = `translateX(-${adCarouselIdx * 100}%)`;
-}
-
-// 選んだマンガのスライドを生成（右端=page01、左へpage02...という並び）
-function buildAdSlides(manga){
-  const track = document.getElementById('ad-carousel-track');
-  if(!track) return;
-  let html = '';
-  for(let p = manga.pages; p >= 1; p--){
-    const num = String(p).padStart(2, '0');
-    html += `<div class="ad-carousel-slide"><img src="./${manga.folder}/page${num}.jpg" alt="中身${p}"></div>`;
-  }
-  track.innerHTML = html;
-  adTotal = manga.pages;
-  adCurrentFolder = manga.folder;
-}
-
-function initAdCarousel(){
-  // ランダムでマンガを1つ選んでスライド生成
-  const manga = AD_MANGA[Math.floor(Math.random() * AD_MANGA.length)];
-  buildAdSlides(manga);
-
-  // 初期位置 = 右端（page01）。idxが小さいほどpage番号が大きい並び。
-  adCarouselIdx = adTotal - 1;
-  const track = document.getElementById('ad-carousel-track');
-  if(track) track.style.transition = 'none';
-  if(track) track.style.transform = `translateX(-${adCarouselIdx * 100}%)`;
-  // transitionを戻す（即時移動後にアニメ復活）
-  setTimeout(()=>{ if(track) track.style.transition = 'transform 0.3s ease'; }, 50);
-
-  if(adCarouselBound) return; // イベントは一度だけ登録
-
-  const prev = document.getElementById('ad-prev');
-  const next = document.getElementById('ad-next');
-  const wrap = document.getElementById('ad-carousel-wrap');
-
-  // 目立つ左矢印「‹」＝次ページ（page02方向）→ idxを減らす
-  if(prev) prev.onclick = ()=>adCarouselGoTo(adCarouselIdx - 1);
-  // 右矢印「›」＝前ページに戻る → idxを増やす
-  if(next) next.onclick = ()=>adCarouselGoTo(adCarouselIdx + 1);
-
-  // タッチ/ポインタースワイプ
-  if(wrap){
-    let startX = 0, dragging = false;
-    wrap.addEventListener('pointerdown', e=>{ startX = e.clientX; dragging = true; });
-    wrap.addEventListener('pointerup', e=>{
-      if(!dragging) return;
-      const dx = e.clientX - startX;
-      // 右スワイプ(dx>0)＝次ページ→idx減らす / 左スワイプ(dx<0)＝前ページ→idx増やす
-      if(Math.abs(dx) > 30) adCarouselGoTo(adCarouselIdx + (dx > 0 ? -1 : 1));
-      dragging = false;
-    });
-    wrap.addEventListener('pointercancel', ()=>{ dragging = false; });
-  }
-
-  adCarouselBound = true;
-}
-
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if(id==='s-ad') initAdCarousel();
 }
 
 function startGame(hand){
