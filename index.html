@@ -58,6 +58,10 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 .t-flow-item.curve strong{color:#ffcc66}
 .t-flow-arrow{font-size:18px;color:rgba(255,255,255,.2)}
 .t-flow-loop{font-size:11px;color:var(--cyan);letter-spacing:2px;margin-top:8px;width:100%;text-align:center}
+.t-sister{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding:8px 16px;border:1px solid rgba(255,255,255,.14);border-radius:4px;font-size:12px;letter-spacing:1px;color:rgba(255,255,255,.6);text-decoration:none;transition:border-color .15s,color .15s}
+.t-sister:hover{border-color:rgba(255,255,255,.35);color:rgba(255,255,255,.9)}
+.t-sister-lbl{font-size:9px;letter-spacing:2px;color:var(--red);border:1px solid rgba(192,57,43,.5);border-radius:2px;padding:2px 6px}
+.t-sister-go{color:rgba(255,255,255,.35)}
 
 /* ── GAME ── */
 #s-game{background:var(--ink2)}
@@ -229,7 +233,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
   <div class="title-glow"></div>
   <div class="title-inner">
     <div class="t-main">マンガ<br>ペン入れ<br>極マッター</div>
-    <div class="t-ver">MPK Ver 0.9.34</div>
+    <div class="t-ver">MPK Ver 0.94</div>
     <div class="t-desc">
       直線・曲線、各5問を繰り返す。<br>
       時間内にできるだけ高精度で描き続けよう。
@@ -255,6 +259,9 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
       <div class="t-flow-item curve"><strong>曲線②</strong>×5問</div>
       <div class="t-flow-loop">↩ 全4種クリアでまた直線①から繰り返す</div>
     </div>
+    <a class="t-sister" href="https://manga-tools.github.io/daen-kiwamatter/" target="_blank" rel="noopener">
+      <span class="t-sister-lbl">姉妹アプリ</span>マンガ 楕円 極マッター<span class="t-sister-go">›</span>
+    </a>
   </div>
 </div>
 
@@ -318,7 +325,7 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
     <!-- 統計 -->
     <div class="r-stats" id="r-stats"></div>
     <div class="r-btns">
-      <button class="rbtn p" onclick="showScreen('s-ad')">もう一度</button>
+      <button class="rbtn p" onclick="showAd()">もう一度</button>
       <button class="rbtn x" onclick="shareResult()">結果画像保存</button>
       <button class="rbtn s" onclick="showScreen('s-title')">タイトルへ</button>
     </div>
@@ -332,8 +339,8 @@ body{background:var(--ink);color:var(--white);font-family:'Noto Sans JP',sans-se
 
 <div id="s-ad" class="screen">
   <div class="ad-inner">
-    <a class="ad-promo" href="https://nametank.jp/pages/manga-type-diagnosis?utm_source=gotosite&utm_medium=referral" target="_blank" rel="noopener" onclick="gtag('event','diagnosis_click',{event_category:'ad'})">
-      <img src="./manga-type-2a-1200x1700.jpg" alt="マンガ家タイプ診断">
+    <a class="ad-promo" id="ad-link" href="#" target="_blank" rel="noopener sponsored" onclick="adClick()">
+      <img id="ad-img" src="" alt="おすすめアイテム">
     </a>
     <button class="btn-continue" onclick="adContinue()">続けて極まる</button>
   </div>
@@ -1538,7 +1545,7 @@ function showFeedback(score, speed) {
   else if(score>=80){cls='ex';lbl='素晴らしい';}
   else if(score>=70){cls='gd';lbl='いい線だ';}
   else if(score>=55){cls='ok';lbl='もう少し';}
-  else{cls='bd';lbl='やり直せ';}
+  else{cls='bd';lbl='落ち着いて';}
   const c=cls==='ex'?'var(--gold2)':cls==='gd'?'var(--green)':cls==='ok'?'var(--orange)':'var(--red)';
   document.getElementById('fb-inner').innerHTML=`<div class="fb-num ${cls}">${score}</div><div class="fb-lbl" style="color:${c}">${lbl}</div>`;
   document.getElementById('fb-ov').classList.add('show');
@@ -1937,6 +1944,32 @@ function exitPractice(){
   P=null; showScreen('s-title');
 }
 // 結果→広告→「続ける」の遷移先を、練習から来たら練習、本番なら本番に振り分け
+// ── 告知（ランダム出し分け） ──
+const AD_LIST = [
+  { id:'ad1', img:'./ad1.jpg', url:'https://link.amazon/B0iEeUrmy', alt:'MEKO Apple Pencil 交換用ペン先 透明タイプ' },
+  { id:'ad2', img:'./ad2.jpg', url:'https://link.amazon/B03fpAANp', alt:'エレコム iPad Air 13インチ ケント紙タイプ 保護フィルム' },
+  { id:'ad3', img:'./ad3.jpg', url:'https://link.amazon/B09pXB3qk', alt:'KINGONE 2in1 スタイラスペン' },
+  { id:'ad4', img:'./ad4.jpg', url:'https://link.amazon/B0bMoLEWA', alt:'Samsung Galaxy Tab S10 FE' },
+];
+let currentAd = null;
+
+function showAd(){
+  currentAd = AD_LIST[Math.floor(Math.random()*AD_LIST.length)];
+  const a = document.getElementById('ad-link');
+  const img = document.getElementById('ad-img');
+  a.href = currentAd.url;
+  img.src = currentAd.img;
+  img.alt = currentAd.alt;
+  showScreen('s-ad');
+}
+
+function adClick(){
+  if(typeof gtag==='function') gtag('event','amazon_click',{event_category:'ad',event_label:currentAd?currentAd.id:'unknown'});
+}
+
+// 画像を先読みしておき、切り替え時のちらつきを防ぐ
+AD_LIST.forEach(a=>{ const i=new Image(); i.src=a.img; });
+
 function adContinue(){ if(G.isPractice) startPractice(); else startGame(); }
 
 function prBuildSlots(W,H,phaseIdx){
